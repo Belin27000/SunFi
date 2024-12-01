@@ -48,4 +48,5 @@ jobs:
 
       # Etape 6 : Exécution des tests des smart contracts
       - name: Run Tests
+        working-directory: ./backend
         run: npx hardhat test
