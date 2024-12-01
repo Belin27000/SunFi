@@ -19,30 +19,32 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Etape 2 move to backend
-      - name: move to Backend Directory
-        run: cd backend
-
-      # Etape 3 : Configurer Node.js
-      - name: Setup Node.js
+      # Etape 2 : Configurer Node.js
+      - name: Setup Node.js 20
         uses: actions/setup-node@v3
         with:
-          node-version: 20.12.2
+          node-version: 20
       
-      # Etape 4 : Mise en cache des modules Node.js
+      # Etape 3 : Mise en cache des modules Node.js
       - name: Cache Node Modules
         id: cache-node-modules
         uses: actions/cache@v3
         with:
-          path: 'backend/node_modules'
+          path: './backend/node_modules'
           key: node_modules-${{ hashFiles('backend/package-lock.json') }}  # Clé unique basée sur le contenu de package-lock.json
           restore-keys: |
             node-modules-
 
-      # Etape 5 Installer les dépendances
+      # Etape 4 Installer les dépendances
       - name: Install Dependencies
+        working-directory: ./backend
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci
+      
+      # Etpae 5 Compilation des Smart Contract
+      - name: Compile contracts
+        working-directory: ./backend
+        run: npx hardhat compile
 
       # Etape 6 : Exécution des tests des smart contracts
       - name: Run Tests
