@@ -54,5 +54,15 @@ describe("SunFi contract test", function () {
             .to.emit(contractDeployed, "ClientRegistered")
             .withArgs(addr1.address);
     })
+    it("Should revert if the adress is not in the list 'clients'", async function () {
+        await expect(contractDeployed.connect(owner).deleteClient(addr1.address))
+            .to.revertedWith("This address is not a client adress")
+    })
+    it("Should emit if the client is delete from the list 'clients'", async function () {
+        await contractDeployed.connect(owner).addClient(addr1.address);
+        await expect(contractDeployed.connect(owner).deleteClient(addr1.address))
+            .to.emit(contractDeployed, "ClientRegistered")
+            .withArgs(addr1.address);
+    })
 
 });

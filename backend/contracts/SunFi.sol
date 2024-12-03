@@ -34,4 +34,12 @@ contract SunFi is Ownable {
 
         emit ClientRegistered(_addr);
     }
+    function deleteClient(address _addr) external onlyOwner {
+        require(
+            clients[_addr].isRegistered == true,
+            "This address is not a client adress"
+        );
+        clients[_addr].isRegistered = false;
+        emit ClientRegistered(_addr);
+    }
 }
