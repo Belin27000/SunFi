@@ -3,6 +3,7 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
 import hre from "hardhat";
 import { SunFi } from "../../typechain-types";
+import { assert } from "console";
 
 describe("SunFi contract test", function () {
 
@@ -35,6 +36,13 @@ describe("SunFi contract test", function () {
         expect(await contractDeployed.owner()).to.equal(owner.address);
     })
 
+    // ::::::::::::: GETTERS ::::::::::::: //
+
+    it("Should return  the correct client information for a registered address", async function () {
+        await contractDeployed.connect(owner).addClient(addr1.address)
+        const client = await contractDeployed.getClient(addr1.address);
+        expect(client.isRegistered).to.equal(true);
+    })
     // ::::::::::::: CLIENT REGISTRATION ::::::::::::: //
 
     it("Should revert if the owner try to be registered as client", async function () {
@@ -63,6 +71,21 @@ describe("SunFi contract test", function () {
         await expect(contractDeployed.connect(owner).deleteClient(addr1.address))
             .to.emit(contractDeployed, "ClientRegistered")
             .withArgs(addr1.address);
+    })
+
+    // ::::::::::::: Mint Token ::::::::::::: //
+    it("Sould revert if the mint adrress is not into the list 'clients'", async function () {
+        await contractDeployed.connect(owner).addClient(addr1.address);
+        await expect(contractDeployed.connect(addr1).getSunWattToken(addr2.address, 100))
+            .to.be.revertedWith("This address is not a client adress")
+    })
+    it("Should mint tokens for a registered client", async function () {
+        await contractDeployed.connect(owner).addClient(addr1.address);
+        await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 1000);
+
+        const balance = await contractDeployed.balanceOf(addr1.address);
+        expect(balance).to.equal(1000);
+
     })
 
 });

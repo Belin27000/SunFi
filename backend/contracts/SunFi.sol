@@ -4,8 +4,9 @@ pragma solidity ^0.8.27;
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract SunFi is Ownable {
+contract SunFi is ERC20, Ownable {
     struct Client {
         bool isRegistered;
     }
@@ -14,7 +15,7 @@ contract SunFi is Ownable {
 
     event ClientRegistered(address clientAdress);
 
-    constructor() payable Ownable(msg.sender) {}
+    constructor() payable Ownable(msg.sender) ERC20("SunWatt", "SWT") {}
 
     // ::::::::::::: GETTERS ::::::::::::: //
 
@@ -42,4 +43,14 @@ contract SunFi is Ownable {
         clients[_addr].isRegistered = false;
         emit ClientRegistered(_addr);
     }
+    // ::::::::::::: Mint Token ::::::::::::: //
+    function getSunWattToken(address recipient, uint amount) external {
+        require(
+            clients[recipient].isRegistered == true,
+            "This address is not a client adress"
+        );
+        _mint(recipient, amount);
+    }
+    receive() external payable {}
+    fallback() external payable {}
 }
