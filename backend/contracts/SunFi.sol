@@ -10,10 +10,18 @@ contract SunFi is ERC20, Ownable {
     struct Client {
         bool isRegistered;
     }
+    struct walletAmount {
+        uint256 tokenAmount;
+    }
 
     mapping(address => Client) clients;
+    mapping(address => walletAmount) totalMinted;
 
     event ClientRegistered(address clientAdress);
+    event TokenMinted(address indexed recipient, uint256 amount);
+
+    event ReceivedEther(address sender, uint256 amount);
+    event FallbackCalled(address sender, uint256 amount, bytes data);
 
     constructor() payable Ownable(msg.sender) ERC20("SunWatt", "SWT") {}
 
@@ -24,7 +32,6 @@ contract SunFi is ERC20, Ownable {
     }
 
     // ::::::::::::: CLIENT REGISTRATION ::::::::::::: //
-
     function addClient(address _addr) external onlyOwner {
         require(_addr != owner(), "Owner cannot be registered as a client");
         require(
@@ -35,6 +42,8 @@ contract SunFi is ERC20, Ownable {
 
         emit ClientRegistered(_addr);
     }
+    // ::::::::::::: CLIENT DELETION ::::::::::::: //
+
     function deleteClient(address _addr) external onlyOwner {
         require(
             clients[_addr].isRegistered == true,
@@ -50,7 +59,27 @@ contract SunFi is ERC20, Ownable {
             "This address is not a client adress"
         );
         _mint(recipient, amount);
+        totalMinted[recipient].tokenAmount += amount;
+        emit TokenMinted(recipient, amount);
     }
-    receive() external payable {}
-    fallback() external payable {}
+
+    // ::::::::::::: Check Token ::::::::::::: //
+    function getTotalMinted(address _addr) external view returns (uint256) {
+        require(
+            clients[_addr].isRegistered == true,
+            "This address is not a client adress"
+        );
+
+        return totalMinted[_addr].tokenAmount;
+    }
+
+    // ::::::::::::: RECEIVED FUNTION ::::::::::::: //
+    receive() external payable {
+        emit ReceivedEther(msg.sender, msg.value);
+    }
+
+    // ::::::::::::: FALLBACK FUNTION ::::::::::::: //
+    fallback() external payable {
+        emit FallbackCalled(msg.sender, msg.value, msg.data);
+    }
 }

@@ -1,9 +1,9 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { expect } from "chai";
-import hre from "hardhat";
+import { assert, expect } from "chai";
+import hre, { ethers } from "hardhat";
 import { SunFi } from "../../typechain-types";
-import { assert } from "console";
+
 
 describe("SunFi contract test", function () {
 
@@ -11,13 +11,16 @@ describe("SunFi contract test", function () {
     let addr1: HardhatEthersSigner
     let addr2: HardhatEthersSigner
     let contractDeployed: SunFi;
+    let contractAdress: string;
 
 
     async function deployContractFixture() {
-        [owner, addr1, addr2] = await hre.ethers.getSigners();
-        const contractDeployed = await hre.ethers.deployContract("SunFi");
+        [owner, addr1, addr2] = await ethers.getSigners();
 
-        return { contractDeployed, owner, addr1, addr2 }
+        contractDeployed = await hre.ethers.deployContract("SunFi")
+        contractAdress = await contractDeployed.getAddress()
+
+        return { contractDeployed, owner, addr1, addr2, contractAdress }
     }
     // ::::::::::::: FONCTIONS UTILITAIRES ::::::::::::: //
 
@@ -31,8 +34,15 @@ describe("SunFi contract test", function () {
         ({ contractDeployed, owner, addr1, addr2 } = await loadFixture(deployContractFixture));
     })
 
+    // ::::::::::::: DEPLOIEMENT DU CONTRAT ::::::::::::: //
+    it("Should deploy the contract and have a valid address", async function () {
+        expect(contractAdress).to.be.a("string"); // Vérifiez que l'adresse est une chaîne valide
+        console.log("Deployed contract address:", contractAdress);
+    });
+
+
     it("Should set the right owner", async function () {
-        const { owner, contractDeployed } = await loadFixture(deployContractFixture)
+        // const { owner, contractDeployed } = await loadFixture(deployContractFixture)
         expect(await contractDeployed.owner()).to.equal(owner.address);
     })
 
@@ -45,6 +55,9 @@ describe("SunFi contract test", function () {
     })
     // ::::::::::::: CLIENT REGISTRATION ::::::::::::: //
 
+    it("Should revert if an address differente form the owner try to add a client", async function () {
+        await expect(contractDeployed.connect(addr1).addClient(addr2.address)).to.be.reverted;
+    })
     it("Should revert if the owner try to be registered as client", async function () {
 
         await expect(addClient(owner)).to.be.revertedWith("Owner cannot be registered as a client");
@@ -57,11 +70,17 @@ describe("SunFi contract test", function () {
     })
 
     it("Should emit the event ClientRegistered", async function () {
-        // await expect(addClient(addr1)).to.emit(contractDeployed, "ClientRegistered").withArgs(addr1.address);
+
         await expect(contractDeployed.connect(owner).addClient(addr1.address))
             .to.emit(contractDeployed, "ClientRegistered")
             .withArgs(addr1.address);
     })
+
+    // ::::::::::::: CLIENT DELETION ::::::::::::: //
+    it("Should revert if an address differente form the owner try to add a client", async function () {
+        await expect(contractDeployed.connect(addr1).deleteClient(addr2.address)).to.be.reverted;
+    })
+
     it("Should revert if the adress is not in the list 'clients'", async function () {
         await expect(contractDeployed.connect(owner).deleteClient(addr1.address))
             .to.revertedWith("This address is not a client adress")
@@ -84,8 +103,74 @@ describe("SunFi contract test", function () {
         await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 1000);
 
         const balance = await contractDeployed.balanceOf(addr1.address);
-        expect(balance).to.equal(1000);
+        await expect(balance).to.equal(1000);
 
     })
+    // ::::::::::::: Check Token ::::::::::::: //
+    it("Should revert if the address is not into client list", async function () {
 
-});
+        await contractDeployed.connect(owner).addClient(addr1.address)
+        await expect(contractDeployed.connect(addr1).getTotalMinted(addr2.address)).to.be.reverted
+
+    })
+    it("Should return the correct total minted for an adress", async function () {
+        await contractDeployed.connect(owner).addClient(addr1.address)
+
+        await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 100)
+
+        const totalMinted = await contractDeployed.getTotalMinted(addr1.address);
+        assert.equal(totalMinted.toString(), "100", "Total minted should be 100")
+    })
+
+    it("Should return 0 for an address with no minted tokens", async function () {
+
+        await contractDeployed.connect(owner).addClient(addr1.address)
+        await contractDeployed.connect(addr1)
+
+        const totalMinted = await contractDeployed.getTotalMinted(addr1.address)
+        assert.equal(totalMinted.toString(), "0", "Total minted should be 0")
+
+    })
+    // ::::::::::::: RECEIVED FUNTION ::::::::::::: //
+    it("Should accept Ether via receive function", async function () {
+        const amount = ethers.parseEther("1.0")
+        const tx = await owner.sendTransaction({
+            to: contractAdress,
+            value: amount
+        });
+
+        await tx.wait()
+
+        const balance = await ethers.provider.getBalance(contractAdress)
+        await expect(balance.toString()).to.equal(amount.toString())
+    })
+
+    it("Should emit an event if the receive function receive Ether", async function () {
+        const amount = ethers.parseEther("5")
+
+        const tx = await owner.sendTransaction({
+            to: contractAdress,
+            value: amount
+        });
+
+        await tx.wait()
+
+        await expect(tx)
+            .to.emit(contractDeployed, "ReceivedEther").withArgs(owner.address, amount)
+    })
+    // ::::::::::::: FALLBACK FUNTION ::::::::::::: //
+
+    it("Should call the fallback function and emit an event", async function () {
+        const amount = ethers.parseEther("2");
+
+        const tx = await owner.sendTransaction({
+            to: contractAdress,
+            value: amount,
+            data: "0x123456"
+        });
+        await tx.wait()
+
+        await expect(tx).to.emit(contractDeployed, "FallbackCalled").withArgs(owner.address, amount, "0x123456")
+
+    })
+})
