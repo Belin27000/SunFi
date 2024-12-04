@@ -55,11 +55,37 @@ contract SunFi is ERC20, Ownable {
     // ::::::::::::: Mint Token ::::::::::::: //
     function getSunWattToken(address recipient, uint amount) external {
         require(
+            msg.sender == recipient,
+            "Unauthorized: Only token owner can burn their tokens"
+        );
+        require(
             clients[recipient].isRegistered == true,
             "This address is not a client adress"
         );
         _mint(recipient, amount);
         totalMinted[recipient].tokenAmount += amount;
+        emit TokenMinted(recipient, amount);
+    }
+    // ::::::::::::: Burn Token ::::::::::::: //
+    function burnSunWattToken(address recipient, uint amount) external {
+        require(
+            msg.sender == recipient,
+            "Unauthorized: Only token owner can burn their tokens"
+        );
+        require(
+            clients[recipient].isRegistered == true,
+            "This address is not a client adress"
+        );
+        require(
+            totalMinted[recipient].tokenAmount > 0,
+            "Can not burn Token as this address doesn't have any"
+        );
+        require(
+            totalMinted[recipient].tokenAmount > amount,
+            "Can not burn more Token than address get"
+        );
+        _burn(recipient, amount);
+        totalMinted[recipient].tokenAmount -= amount;
         emit TokenMinted(recipient, amount);
     }
 
