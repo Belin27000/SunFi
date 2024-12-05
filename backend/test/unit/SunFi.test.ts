@@ -93,12 +93,17 @@ describe("SunFi contract test", function () {
     })
 
     // ::::::::::::: Mint Token ::::::::::::: //
-    it("Mint - Sould revert if the mint adrress is not into the list 'clients'", async function () {
+    it("Mint - Sould revert if the mint adrress is not the connected address'", async function () {
         await contractDeployed.connect(owner).addClient(addr1.address);
         await expect(contractDeployed.connect(addr1).getSunWattToken(addr2.address, 100))
             .to.be.revertedWith("Unauthorized: Only token owner can burn their tokens")
     })
-    it("Mint - Should mint tokens for a registered client", async function () {
+    it("Mint - Sould revert if the mint adrress is not into the list 'clients'", async function () {
+        await contractDeployed.connect(owner).addClient(addr1.address);
+        await expect(contractDeployed.connect(addr2).getSunWattToken(addr2.address, 100))
+            .to.be.revertedWith("This address is not a client adress")
+    })
+    it("Mint - Should not revert mint tokens for a registered client", async function () {
         await contractDeployed.connect(owner).addClient(addr1.address);
         await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 1000);
 
