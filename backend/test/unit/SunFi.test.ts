@@ -3,6 +3,7 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { assert, expect } from "chai";
 import hre, { ethers } from "hardhat";
 import { SunFi } from "../../typechain-types";
+import { fetchContractData, fetchSupplierRates } from "../../ignition/modules/aave-project/aaveDataFetcher";
 
 
 describe("SunFi contract test", function () {
@@ -217,6 +218,20 @@ describe("SunFi contract test", function () {
         await tx.wait()
 
         await expect(tx).to.emit(contractDeployed, "FallbackCalled").withArgs(owner.address, amount, "0x123456")
+
+    })
+
+})
+
+describe('Aave Data Fetcher', function () {
+    it("Should fetch data from Aave protocol", async function () {
+        const data = await fetchContractData()
+        const rate = await fetchSupplierRates()
+
+        console.log(rate);
+        // console.log(data.reserves);
+        await expect(data).to.have.property('reserves');
+        await expect(data).to.have.property('userReserves');
 
     })
 })
