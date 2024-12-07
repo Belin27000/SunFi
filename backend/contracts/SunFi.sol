@@ -2,10 +2,9 @@
 pragma solidity ^0.8.27;
 
 // Uncomment this line to use console.log
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
 contract SunFi is ERC20, Ownable {
     struct Client {
         bool isRegistered;
@@ -23,22 +22,27 @@ contract SunFi is ERC20, Ownable {
     event ReceivedEther(address sender, uint256 amount);
     event FallbackCalled(address sender, uint256 amount, bytes data);
 
-    constructor() payable Ownable(msg.sender) ERC20("SunWatt", "SWT") {}
+    constructor() payable Ownable(msg.sender) ERC20("SunWatt", "KWH") {}
 
     // ::::::::::::: GETTERS ::::::::::::: //
 
-    function getClient(address _addr) external view returns (Client memory) {
-        return clients[_addr];
+    function getClient(address _addr) external view returns (bool) {
+        return clients[_addr].isRegistered;
     }
 
     // ::::::::::::: CLIENT REGISTRATION ::::::::::::: //
     function addClient(address _addr) external onlyOwner {
+        console.log("Appel par :", msg.sender);
+        console.log("Adresse enregistre :", _addr);
         require(_addr != owner(), "Owner cannot be registered as a client");
         require(
             clients[_addr].isRegistered != true,
             "This adress already registered as a client address!"
         );
+        console.log("Before:", clients[_addr].isRegistered);
+
         clients[_addr].isRegistered = true;
+        console.log("After:", clients[_addr].isRegistered);
 
         emit ClientRegistered(_addr);
     }

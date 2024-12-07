@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import RainbowKitAndWagmiProvider from "./RainbowKitAndWagmiProvider";
-import Layout from "./components/shared/Layout"
+import Layout from "../components/shared/Layout"
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -21,18 +22,22 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({
-  children
-}) {
+  children,
+}: {
+  children: React.ReactNode
+}
+) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-sunFibg`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <RainbowKitAndWagmiProvider>
           <Layout>
             {children}
           </Layout>
         </RainbowKitAndWagmiProvider>
+        <Toaster />
       </body>
     </html>
   );

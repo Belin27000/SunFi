@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.1.0",
-    "aave-project": "./ignition/modules/aave-project"
+    "aave-project": "./ignition/modules/aave-project",
+    "dotenv": "^16.4.7"
   }
 }
