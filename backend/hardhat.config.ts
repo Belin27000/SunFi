@@ -14,7 +14,7 @@ const config: HardhatUserConfig = {
   solidity: "0.8.27",
   networks: {
     localhost: {
-      accounts: LOCAL_PK ? [`0x${LOCAL_PK}`] : [],
+      // accounts: LOCAL_PK ? [`0x${LOCAL_PK}`] : [],
       url: "http://127.0.0.1:8545", // Blockchain locale Hardhat
     },
     sepolia: {

@@ -1,157 +1,175 @@
 'use client'
 
-
-import { useState, useEffect } from "react"
-import { useToast } from "@/hooks/use-toast"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { contractAdress, contractAbi } from "@/app/constants/index.js"
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi"
-import { parseAbiItem } from "viem"
-import { publicClient } from "@/utils/client.js"
-
+import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { contractAdress, contractAbi } from "@/app/constants/index.js";
+import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+// import { checkClient } from '@/utils/contractUtils';
+import { publicClient } from "@/utils/client.js";
 
 const SunFi = () => {
     const { address } = useAccount();
-    const [addr, setAddr] = useState()
-    const [isChecking, setIsChecking] = useState(false);
-    const [isClient, setIsClient] = useState(false);
-    const [verificationError, setVerificationError] = useState(null);
-    const [hasChecked, setHasChecked] = useState(false);
+    const [addr, setAddr] = useState("");
+    const { toast } = useToast();
+    const [deletionAddr, setDeletionAddr] = useState(false)
 
-
-    const { toast } = useToast()
-
-    // Ajoute une nouvelle adresse
-    const { data: hash, error, isPending: setIsPending, writeContract } = useWriteContract({
+    const { data, refetch } = useReadContract({
+        abi: contractAbi,
+        address: contractAdress,
+        functionName: 'getClient',
+        args: [addr],
+        enable: false,
+    })
+    const { writeContract, data: hash, isPending: SetIsPending } = useWriteContract({
     });
+    const { isLoading: isConfirming, isSuccess, isError, error } = useWaitForTransactionReceipt({
+        hash
+    })
 
-    // Fonction pour vérifier si une adresse est enregistrée
-    const checkClient = async () => {
-        setIsChecking(true);
-        setVerificationError(null);
-        setIsClient(false);
-        setHasChecked(true);
-
-
+    const handleCheckClient = async () => {
         try {
-            const result = await publicClient.readContract({
-                address: contractAdress,
-                abi: contractAbi,
-                functionName: 'getClient',
-                args: [addr],
+            const { data } = await refetch();
+
+            if (data) {
+                toast({
+                    title: "Adresse enregistrée",
+                    description: `L'adresse ${addr} est déjà enregistrée.`,
+                    variant: "success",
+                    className: "bg-green-500 break-all",
+                });
+            } else {
+                toast({
+                    title: "Adresse non enregistrée",
+                    description: `L'adresse ${addr} n'est pas dans la liste des clients.`,
+                    className: "bg-orange-500 break-all",
+                });
+            }
+        } catch (error) {
+            toast({
+                title: "Erreur de vérification",
+                description: error.message || "Une erreur inconnue est survenue.",
+                variant: "destructive",
+                className: "bg-red-500 break-all",
             });
-            setIsClient(result);
-            console.log("Client status:", result);
-        } catch (err) {
-            console.error("Error during client check:", err);
-            setVerificationError(err.message || "Une erreur s'est produite !");
-        } finally {
-            setIsChecking(false);
         }
     };
     const handleAddClient = async () => {
-        console.log("Contract Address:", contractAdress);
-        console.log("Address to Add:", addr);
-        console.log("ABI:", contractAbi);
+        try {
+            toast({
+                title: 'Enregistrement en cours',
+                description: `L'adresse ${addr} est en cours d'enregistrement.`,
+                variant: 'default',
+                className: "break-all"
+            })
+            // Appelle la fonction `addClient` du contrat
+            const result = await writeContract({
+                abi: contractAbi,
+                address: contractAdress,
+                functionName: 'addClient',
+                args: [addr], // Arguments nécessaires pour la fonction Solidity
+            });
+            console.log('Transaction envoyée :', hash);
+            toast({
+                title: "En attente de confirmation",
+                description: `Transaction envoyée. Hash : ${hash}`,
+                className: "break-all"
+            });
+        } catch (err) {
+            toast({
+                title: 'Erreur',
+                description: err.message || "Une erreur est survenue.",
+                variant: 'destructive'
+            })
 
-        writeContract({
-            address: contractAdress,
-            abi: contractAbi,
-            functionName: 'addClient',
-            args: [addr],
-        })
+        }
+    }
+    const handleDeleteClient = async () => {
+        setDeletionAddr(true)
+        try {
+            toast({
+                title: 'Suppression en cours',
+                description: `L'adresse ${addr} est en cours de suppression.`,
+                variant: 'default',
+                className: "break-all"
+            })
+            // Appelle la fonction `addClient` du contrat
+            const result = await writeContract({
+                abi: contractAbi,
+                address: contractAdress,
+                functionName: 'deleteClient',
+                args: [addr], // Arguments nécessaires pour la fonction Solidity
+            });
+            console.log('Transaction envoyée :', hash);
+            toast({
+                title: "En attente de confirmation",
+                description: `Transaction envoyée. Hash : ${hash}`,
+                className: "break-all"
+            });
+        } catch (err) {
+            toast({
+                title: 'Erreur',
+                description: err.message || "Une erreur est survenue.",
+                variant: 'destructive',
+                className: "break-all"
+            })
 
+        }
+        setDeletionAddr(false)
 
-    };
-
-    const { isLoading: isConfirming, isSuccess, error: errorConfirmation } =
-        useWaitForTransactionReceipt({
-            hash
-        });
+    }
+    useEffect(() => {
+        if (isSuccess) {
+            if (deletionAddr) {
+                toast({
+                    title: 'Succès',
+                    description: `L'adresse ${addr} a été enregistrée avec succès`,
+                    variant: 'success',
+                    className: 'bg-green-500 break-all'
+                })
+            } else {
+                toast({
+                    title: 'Succès',
+                    description: `L'adresse ${addr} a été supprimée avec succès`,
+                    variant: 'success',
+                    className: 'bg-green-500 break-all'
+                })
+            }
+        }
+        if (isError) {
+            toast({
+                title: 'Erreur de confirmation',
+                description: error?.message || 'Une erreur est survenue lors de la confirmation.',
+                variant: 'destructive',
+                className: 'bg-red-500 break-all'
+            })
+        }
+    }, [isSuccess, isError, error])
 
     return (
         <div className="flex flex-col w-full justify-start mt-10">
-            <h2 className="mb-4 text-4xl">Adminstration des clients</h2>
-            <div className="my-4">
-                Vérifier si une adresse est déjà un client
-            </div>
+            <h2 className="mb-4 text-4xl">Administration des clients</h2>
+
+            <div className="my-4">Vérifier si une adresse est déjà un client</div>
             <div className="flex">
-                <Input
-                    placeholder="Entrez l'adresse à vérifier"
-                    onChange={(e) => setAddr(e.target.value)}
-                />
-                <Button className="ml-10" onClick={checkClient}>
-                    {isChecking ? "Vérification..." : "Vérifier"}
-                </Button>
+                <Input placeholder="Entrez l'adresse à vérifier" onChange={(e) => setAddr(e.target.value)} />
+                <Button className="ml-10" onClick={handleCheckClient}>Vérifier</Button>
             </div>
-            {isChecking && (
-                <Alert className="bg-amber-500 mt-2">
-                    <AlertTitle>Vérification en cours</AlertTitle>
-                    <AlertDescription>
-                        L'adresse {addr} est en cours de vérification.
-                    </AlertDescription>
-                </Alert>
-            )}
-            {verificationError && (
-                <Alert className="bg-red-600 mt-2">
-                    <AlertTitle>Erreur de vérification</AlertTitle>
-                    <AlertDescription>{verificationError}</AlertDescription>
-                </Alert>
-            )}
-            {isClient && (
-                <Alert className="bg-lime-400 mt-2">
-                    <AlertTitle>Adresse enregistrée</AlertTitle>
-                    <AlertDescription>
-                        L'adresse <span className="bg-black text-white p-2">{addr}</span> est déjà enregistrée.
-                    </AlertDescription>
-                </Alert>
-            )}
-            {hasChecked && !isClient && addr && !isChecking && !verificationError && (
-                <Alert className="bg-gray-400 mt-2">
-                    <AlertTitle>Adresse non enregistrée</AlertTitle>
-                    <AlertDescription>
-                        L'adresse <span className="bg-black text-white p-2">{addr}</span> n'est pas dans la liste des clients.
-                    </AlertDescription>
-                </Alert>
-            )}
-
-            <div className="my-4">
-                Ajouter une adresse client
-            </div>
+            <div className="my-4">Ajouter une adresse client</div>
             <div className="flex">
-                <Input placeholder="Entrez l'adresse à ajouter" onChange={(e) => { setAddr(e.target.value) }} />
-                <Button className="ml-10" disabled={setIsPending} onClick={handleAddClient}>{setIsPending ? 'Ajout en cours...' : "Ajouter"}</Button>
+                <Input placeholder="Entrez l'adresse à ajouter" onChange={(e) => setAddr(e.target.value)} />
+                <Button className="ml-10" onClick={handleAddClient}>Ajouter</Button>
             </div>
-            {isConfirming &&
-                <Alert className="bg-amber-500 mt-2">
-                    <AlertTitle>Adresse en cour d'enregistrement</AlertTitle>
-                    <AlertDescription>
-                        L'adresse {addr} est en cours d'enregistrement
-                    </AlertDescription>
-                </Alert>
 
-            }
-            {isSuccess &&
-                <Alert className="bg-lime-400 mt-2">
-                    <AlertTitle className="mb-4">Adresse enregistrée</AlertTitle>
-                    <AlertDescription>
-                        <p>L'adresse <span className="bg-black text-white p-2">{addr}</span> a été enregistré avec succès</p>
-                        <p className="mt-4">Transaction hash: {hash}</p>
-                    </AlertDescription>
-                </Alert>
-            }
-            {errorConfirmation &&
-                <Alert className="bg-red-600 mt-2">
-                    <AlertTitle className="mb-4">Error d'enregistrement</AlertTitle>
-                    <AlertDescription>
-                        {(errorConfirmation).shortMessage || errorConfirmation.message}
-                    </AlertDescription>
-                </Alert>
-            }
-        </div >
-    )
-}
 
-export default SunFi
+            <div className="my-4">Supprimer une adresse client</div>
+            <div className="flex">
+                <Input placeholder="Entrez l'adresse à supprimer" onChange={(e) => setAddr(e.target.value)} />
+                <Button className="ml-10" onClick={handleDeleteClient}>Supprimer</Button>
+            </div>
+        </div>
+    );
+};
+
+export default SunFi;

@@ -52,7 +52,7 @@ describe("SunFi contract test", function () {
     it("GETTERS - Should return  the correct client information for a registered address", async function () {
         await contractDeployed.connect(owner).addClient(addr1.address)
         const client = await contractDeployed.getClient(addr1.address);
-        expect(client.isRegistered).to.equal(true);
+        expect(client).to.equal(true);
     })
     // ::::::::::::: CLIENT REGISTRATION ::::::::::::: //
 
