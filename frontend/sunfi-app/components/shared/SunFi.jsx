@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { contractAdress, contractAbi } from "@/app/constants/index.js";
 import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
-// import { checkClient } from '@/utils/contractUtils';
 import { publicClient } from "@/utils/client.js";
 
 const SunFi = () => {
