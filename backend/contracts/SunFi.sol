@@ -12,9 +12,14 @@ contract SunFi is ERC20, Ownable {
     struct walletAmount {
         uint256 tokenAmount;
     }
-
+    //Structure de stockage de l'historique des mint de tokens
+    struct MintRecord {
+        uint256 amount;
+        uint256 timestamp;
+    }
     mapping(address => Client) clients;
     mapping(address => walletAmount) totalMinted;
+    mapping(address => MintRecord[]) public mintHistory;
 
     event ClientRegistered(address clientAdress);
     event TokenMinted(address indexed recipient, uint256 amount);
@@ -32,17 +37,13 @@ contract SunFi is ERC20, Ownable {
 
     // ::::::::::::: CLIENT REGISTRATION ::::::::::::: //
     function addClient(address _addr) external onlyOwner {
-        console.log("Appel par :", msg.sender);
-        console.log("Adresse enregistre :", _addr);
         require(_addr != owner(), "Owner cannot be registered as a client");
         require(
             clients[_addr].isRegistered != true,
             "This adress already registered as a client address!"
         );
-        console.log("Before:", clients[_addr].isRegistered);
 
         clients[_addr].isRegistered = true;
-        console.log("After:", clients[_addr].isRegistered);
 
         emit ClientRegistered(_addr);
     }
@@ -68,6 +69,22 @@ contract SunFi is ERC20, Ownable {
         );
         _mint(recipient, amount);
         totalMinted[recipient].tokenAmount += amount;
+
+        MintRecord memory record = MintRecord({
+            amount: amount,
+            timestamp: block.timestamp
+        });
+        mintHistory[recipient].push(record);
+        // Debug log
+        console.log("Mint record added for:", msg.sender);
+        for (uint256 i = 0; i < mintHistory[recipient].length; i++) {
+            console.log("Mint Entry Amount:", mintHistory[recipient][i].amount);
+            console.log(
+                "Mint Entry Timestamp:",
+                mintHistory[recipient][i].timestamp
+            );
+        }
+
         emit TokenMinted(recipient, amount);
     }
     // ::::::::::::: Burn Token ::::::::::::: //
@@ -103,6 +120,28 @@ contract SunFi is ERC20, Ownable {
         return totalMinted[_addr].tokenAmount;
     }
 
+    // ::::::::::::: History FUNTION ::::::::::::: //
+    function getMintHistory(
+        address user
+    ) external view returns (uint256[] memory, uint256[] memory) {
+        uint256 length = mintHistory[user].length;
+        require(length > 0, "No mint history found");
+
+        console.log("Mint Get History record added for:", user);
+
+        uint256[] memory amounts = new uint256[](length);
+        uint256[] memory timestamps = new uint256[](length);
+
+        for (uint256 i = 0; i < length; i++) {
+            amounts[i] = mintHistory[user][i].amount;
+            timestamps[i] = mintHistory[user][i].timestamp;
+
+            console.log("Amount for the transaction", amounts[i]);
+            console.log("Amount for the transaction", timestamps[i]);
+        }
+
+        return (amounts, timestamps);
+    }
     // ::::::::::::: RECEIVED FUNTION ::::::::::::: //
     receive() external payable {
         emit ReceivedEther(msg.sender, msg.value);

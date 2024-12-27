@@ -6,6 +6,7 @@ import { SunFi } from "../../typechain-types";
 import { fetchContractData, fetchSupplierRates } from "../../ignition/modules/aave-project/aaveDataFetcher";
 
 
+
 describe("SunFi contract test", function () {
 
     let owner: HardhatEthersSigner
@@ -178,6 +179,33 @@ describe("SunFi contract test", function () {
 
 
     })
+
+    // ::::::::::::: History FUNTION ::::::::::::: //
+    it("History - Should return the correct mint history for an address ", async function () {
+        await contractDeployed.connect(owner).addClient(addr1.address);
+        const mintAmount1 = 1000n;
+        const mintAmount2 = 2000n;
+
+        const tx1 = await contractDeployed.connect(addr1).getSunWattToken(addr1.address, mintAmount1);
+        const receipt1 = await tx1.wait();
+        const tx2 = await contractDeployed.connect(addr1).getSunWattToken(addr1.address, mintAmount2);
+        const receipt2 = await tx2.wait();
+
+        const block1 = await ethers.provider.getBlock(receipt1.blockNumber!);
+        const block2 = await ethers.provider.getBlock(receipt2.blockNumber!);
+
+        // Appeler getMintHistory
+        const [amounts, timestamps] = await contractDeployed.connect(addr1).getMintHistory();
+        // console.log(amounts, timestamps);
+
+        // Vérifier que les montants et timestamps sont corrects
+        assert.equal(amounts.length, 2, "Mint history should contain 2 records");
+        assert.equal(amounts[0].toString(), mintAmount1.toString(), "First mint amount should match");
+        assert.equal(amounts[1].toString(), mintAmount2.toString(), "Second mint amount should match");
+
+        assert.equal(timestamps[0], block1.timestamp, "First mint timestamp should match the block timestamp");
+        assert.equal(timestamps[1], block2.timestamp, "Second mint timestamp should match the block timestamp");
+    });
     // ::::::::::::: RECEIVED FUNTION ::::::::::::: //
     it("RECEIVED - Should accept Ether via receive function", async function () {
         const amount = ethers.parseEther("1.0")
