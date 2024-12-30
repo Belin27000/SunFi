@@ -195,7 +195,7 @@ describe("SunFi contract test", function () {
         const block2 = await ethers.provider.getBlock(receipt2.blockNumber!);
 
         // Appeler getMintHistory
-        const [amounts, timestamps] = await contractDeployed.connect(addr1).getMintHistory();
+        const [amounts, timestamps] = await contractDeployed.connect(addr1).getMintHistory(addr1.address);
         // console.log(amounts, timestamps);
 
         // Vérifier que les montants et timestamps sont corrects

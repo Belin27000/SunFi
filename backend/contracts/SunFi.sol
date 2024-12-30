@@ -76,14 +76,14 @@ contract SunFi is ERC20, Ownable {
         });
         mintHistory[recipient].push(record);
         // Debug log
-        console.log("Mint record added for:", msg.sender);
-        for (uint256 i = 0; i < mintHistory[recipient].length; i++) {
-            console.log("Mint Entry Amount:", mintHistory[recipient][i].amount);
-            console.log(
-                "Mint Entry Timestamp:",
-                mintHistory[recipient][i].timestamp
-            );
-        }
+        // console.log("Mint record added for:", msg.sender);
+        // for (uint256 i = 0; i < mintHistory[recipient].length; i++) {
+        //     console.log("Mint Entry Amount:", mintHistory[recipient][i].amount);
+        //     console.log(
+        //         "Mint Entry Timestamp:",
+        //         mintHistory[recipient][i].timestamp
+        //     );
+        // }
 
         emit TokenMinted(recipient, amount);
     }
@@ -127,7 +127,7 @@ contract SunFi is ERC20, Ownable {
         uint256 length = mintHistory[user].length;
         require(length > 0, "No mint history found");
 
-        console.log("Mint Get History record added for:", user);
+        // console.log("Mint Get History record added for:", user);
 
         uint256[] memory amounts = new uint256[](length);
         uint256[] memory timestamps = new uint256[](length);
@@ -136,8 +136,8 @@ contract SunFi is ERC20, Ownable {
             amounts[i] = mintHistory[user][i].amount;
             timestamps[i] = mintHistory[user][i].timestamp;
 
-            console.log("Amount for the transaction", amounts[i]);
-            console.log("Amount for the transaction", timestamps[i]);
+            // console.log("Amount for the transaction", amounts[i]);
+            // console.log("Amount for the transaction", timestamps[i]);
         }
 
         return (amounts, timestamps);
