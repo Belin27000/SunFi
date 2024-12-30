@@ -3,12 +3,13 @@ env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 on:
-  pull_request:
+  push:
     branches:
-    - 'main'
+      - 'main'
+
 jobs:
   deploy:
-    name: Deploy to vercel
+    name: Deploy to Vercel
     runs-on: ubuntu-latest
 
     steps:
@@ -22,12 +23,21 @@ jobs:
       with:
         node-version: 20
 
-    # Étape 3 : Installer la CLI Vercel
+    # Étape 3 : Installer les dépendances
+    - name: Install Dependencies
+      working-directory: ./frontend/sunfi-app
+      run: npm install
+
+    # Étape 4 : Construire l'application
+    - name: Build Application
+      working-directory: ./frontend/sunfi-app
+      run: npm run build
+
+    # Étape 5 : Installer la CLI Vercel
     - name: Install Vercel CLI
       run: npm install --global vercel@latest
-    - name: Pull Vercel Environment Information
-      run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-    - name: Build Project Artifacts
-      run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-    - name: Deploy Project Artifacts to Vercel
-      run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+    # Étape 6 : Déployer avec Vercel
+    - name: Deploy to Vercel
+      working-directory: ./frontend/sunfi-app
+      run: vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
