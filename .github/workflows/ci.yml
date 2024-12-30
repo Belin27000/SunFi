@@ -42,10 +42,10 @@ jobs:
         run: npm ci
       
       # Étape 5 : Vérifiez que @aave/contract-helpers est installé
-      - name: Install Missing Dependency
-        working-directory: ./backend
-        run: npm install @aave/contract-helpers --save
-        
+      - name: Install Dependency for Aave Project
+        working-directory: ./backend/ignition/modules/aave-project
+        run: npm ci
+
       # Etpae 5 Compilation des Smart Contract
       - name: Compile contracts
         working-directory: ./backend
