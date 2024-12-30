@@ -16,11 +16,11 @@ export const Header = () => {
                     objectFit="cover"
                 />
             </div>
-            <nav className=" navbar flex grow justify-evenly space-x-4 font-bold">
-                <Link className='hover:bg-black hover:text-white p-2' href="/">Présentation</Link>
-                <Link className='hover:bg-black hover:text-white p-2' href="/Roadmap">Roadmap</Link>
-                <Link className='hover:bg-black hover:text-white p-2' href="/dashboard">Tableau de bord</Link>
-                <Link className='hover:bg-black hover:text-white p-2' href="/Contact">Contact</Link>
+            <nav className=" navbar flex items-center grow justify-evenly space-x-4 font-bold">
+                <Link className='text-center hover:bg-black hover:text-white p-2' href="/">Présentation</Link>
+                <Link className='text-center hover:bg-black hover:text-white p-2' href="/roadmap">Roadmap</Link>
+                <Link className='text-center hover:bg-black hover:text-white p-2' href="/dashboard">Tableau de bord</Link>
+                <Link className='text-center hover:bg-black hover:text-white p-2' href="/contact">Contact</Link>
             </nav>
             <div>
                 <ConnectButton />

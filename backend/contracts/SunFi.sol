@@ -8,6 +8,9 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract SunFi is ERC20, Ownable {
     struct Client {
         bool isRegistered;
+        uint256 maxMintable;
+        uint256 unusedMintAllowance;
+        uint256 lastMintTimestamp;
     }
     struct walletAmount {
         uint256 tokenAmount;
@@ -21,8 +24,9 @@ contract SunFi is ERC20, Ownable {
     mapping(address => walletAmount) totalMinted;
     mapping(address => MintRecord[]) public mintHistory;
 
-    event ClientRegistered(address clientAdress);
+    event ClientRegistered(address clientAdress, uint256 maxMintable);
     event TokenMinted(address indexed recipient, uint256 amount);
+    event MaxMintableUpdated(address indexed client, uint256 newMaxMintable);
 
     event ReceivedEther(address sender, uint256 amount);
     event FallbackCalled(address sender, uint256 amount, bytes data);
@@ -31,21 +35,32 @@ contract SunFi is ERC20, Ownable {
 
     // ::::::::::::: GETTERS ::::::::::::: //
 
-    function getClient(address _addr) external view returns (bool) {
-        return clients[_addr].isRegistered;
+    function getClient(
+        address _addr
+    ) external view returns (bool isRegistered, uint256 maxMintable) {
+        if (clients[_addr].isRegistered) {
+            return (true, clients[_addr].maxMintable);
+        }
+        return (false, 0);
     }
 
     // ::::::::::::: CLIENT REGISTRATION ::::::::::::: //
-    function addClient(address _addr) external onlyOwner {
+    function addClient(address _addr, uint256 _mintableNbr) external onlyOwner {
         require(_addr != owner(), "Owner cannot be registered as a client");
+        require(_mintableNbr > 0, "Mintable number must be greater than zero");
         require(
             clients[_addr].isRegistered != true,
             "This adress already registered as a client address!"
         );
 
-        clients[_addr].isRegistered = true;
+        clients[_addr] = Client({
+            isRegistered: true,
+            maxMintable: _mintableNbr,
+            unusedMintAllowance: 0,
+            lastMintTimestamp: 0
+        });
 
-        emit ClientRegistered(_addr);
+        emit ClientRegistered(_addr, _mintableNbr);
     }
     // ::::::::::::: CLIENT DELETION ::::::::::::: //
 
@@ -54,8 +69,13 @@ contract SunFi is ERC20, Ownable {
             clients[_addr].isRegistered == true,
             "This address is not a client adress"
         );
-        clients[_addr].isRegistered = false;
-        emit ClientRegistered(_addr);
+        clients[_addr] = Client({
+            isRegistered: false,
+            maxMintable: 0,
+            unusedMintAllowance: 0,
+            lastMintTimestamp: 0
+        });
+        emit ClientRegistered(_addr, 0);
     }
     // ::::::::::::: Mint Token ::::::::::::: //
     function getSunWattToken(address recipient, uint amount) external {
@@ -75,15 +95,6 @@ contract SunFi is ERC20, Ownable {
             timestamp: block.timestamp
         });
         mintHistory[recipient].push(record);
-        // Debug log
-        // console.log("Mint record added for:", msg.sender);
-        // for (uint256 i = 0; i < mintHistory[recipient].length; i++) {
-        //     console.log("Mint Entry Amount:", mintHistory[recipient][i].amount);
-        //     console.log(
-        //         "Mint Entry Timestamp:",
-        //         mintHistory[recipient][i].timestamp
-        //     );
-        // }
 
         emit TokenMinted(recipient, amount);
     }

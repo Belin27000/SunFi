@@ -27,8 +27,9 @@ describe("SunFi contract test", function () {
     // ::::::::::::: FONCTIONS UTILITAIRES ::::::::::::: //
 
     // Fonction utilitaire pour ajouter des clients
-    async function addClient(client: HardhatEthersSigner) {
-        await contractDeployed.connect(owner).addClient(client)
+    async function addClient(client: HardhatEthersSigner, maxMintable: number) {
+
+        await contractDeployed.connect(owner).addClient(client, maxMintable)
     }
 
     //Deploiement du contrat avant chaque test
@@ -50,34 +51,39 @@ describe("SunFi contract test", function () {
 
     // ::::::::::::: GETTERS ::::::::::::: //
 
-    it("GETTERS - Should return  the correct client information for a registered address", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address)
+    it("GETTERS - Should return the correct client information for a registered address", async function () {
+        const mintableLimit = 50
+        await contractDeployed.connect(owner).addClient(addr1.address, mintableLimit)
         const client = await contractDeployed.getClient(addr1.address);
-        expect(client).to.equal(true);
+        expect(client.isRegistered).to.equal(true);
+        assert.equal(mintableLimit.toString(), "50", "Mintable number token doesn't match the limit")
     })
     // ::::::::::::: CLIENT REGISTRATION ::::::::::::: //
 
     it("REGISTRATION - Should revert if an address differente form the owner try to add a client", async function () {
-        await expect(contractDeployed.connect(addr1).addClient(addr2.address)).to.be.reverted;
+        await expect(contractDeployed.connect(addr1).addClient(addr2.address, 50)).to.be.reverted;
     })
     it("REGISTRATION - Should revert if the owner try to be registered as client", async function () {
-
-        await expect(addClient(owner)).to.be.revertedWith("Owner cannot be registered as a client");
+        const mintableLimit = 50
+        await expect(
+            contractDeployed.connect(owner).addClient(owner.address, mintableLimit)
+        ).to.be.revertedWith("Owner cannot be registered as a client");
 
     })
     it("REGISTRATION - Should revert if an adress is already registered", async function () {
-        await addClient(addr1)
-        await expect(addClient(addr1)).to.be.revertedWith("This adress already registered as a client address!");
+        await addClient(addr1, 40)
+        await expect(addClient(addr1, 50)).to.be.revertedWith("This adress already registered as a client address!");
 
     })
 
     it("REGISTRATION - Should emit the event ClientRegistered", async function () {
 
-        await expect(contractDeployed.connect(owner).addClient(addr1.address))
+        await expect(
+            contractDeployed.connect(owner).addClient(addr1.address, 50)
+        )
             .to.emit(contractDeployed, "ClientRegistered")
-            .withArgs(addr1.address);
+            .withArgs(addr1.address, 50)
     })
-
     // ::::::::::::: CLIENT DELETION ::::::::::::: //
     it("Client DELETION - Should revert if an address differente form the owner try to add a client", async function () {
         await expect(contractDeployed.connect(addr1).deleteClient(addr2.address)).to.be.reverted;
@@ -88,25 +94,25 @@ describe("SunFi contract test", function () {
             .to.revertedWith("This address is not a client adress")
     })
     it("Client DELETION - Should emit if the client is delete from the list 'clients'", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address);
+        await contractDeployed.connect(owner).addClient(addr1.address, 50);
         await expect(contractDeployed.connect(owner).deleteClient(addr1.address))
             .to.emit(contractDeployed, "ClientRegistered")
-            .withArgs(addr1.address);
+            .withArgs(addr1.address, 0);
     })
 
     // ::::::::::::: Mint Token ::::::::::::: //
     it("Mint - Sould revert if the mint adrress is not the connected address'", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address);
+        await contractDeployed.connect(owner).addClient(addr1.address, 50);
         await expect(contractDeployed.connect(addr1).getSunWattToken(addr2.address, 100))
             .to.be.revertedWith("Unauthorized: Only token owner can burn their tokens")
     })
     it("Mint - Sould revert if the mint adrress is not into the list 'clients'", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address);
+        await contractDeployed.connect(owner).addClient(addr1.address, 50);
         await expect(contractDeployed.connect(addr2).getSunWattToken(addr2.address, 100))
             .to.be.revertedWith("This address is not a client adress")
     })
     it("Mint - Should not revert mint tokens for a registered client", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address);
+        await contractDeployed.connect(owner).addClient(addr1.address, 50);
         await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 1000);
 
         const balance = await contractDeployed.balanceOf(addr1.address);
@@ -116,12 +122,12 @@ describe("SunFi contract test", function () {
     // ::::::::::::: Check Token ::::::::::::: //
     it("Check - Should revert if the address is not into client list", async function () {
 
-        await contractDeployed.connect(owner).addClient(addr1.address)
+        await contractDeployed.connect(owner).addClient(addr1.address, 50)
         await expect(contractDeployed.connect(addr1).getTotalMinted(addr2.address)).to.be.revertedWith("This address is not a client adress")
 
     })
     it("Check - Should return the correct total minted for an adress", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address)
+        await contractDeployed.connect(owner).addClient(addr1.address, 50)
 
         await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 100)
 
@@ -131,7 +137,7 @@ describe("SunFi contract test", function () {
 
     it("Check - Should return 0 for an address with no minted tokens", async function () {
 
-        await contractDeployed.connect(owner).addClient(addr1.address)
+        await contractDeployed.connect(owner).addClient(addr1.address, 50)
         await contractDeployed.connect(addr1)
 
         const totalMinted = await contractDeployed.getTotalMinted(addr1.address)
@@ -140,32 +146,32 @@ describe("SunFi contract test", function () {
     })
     // ::::::::::::: BURN FUNTION ::::::::::::: //
     it("Burn - Should revert if the connect adress try to burn token from other address", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address);
+        await contractDeployed.connect(owner).addClient(addr1.address, 50);
         await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 100)
 
         await expect(contractDeployed.connect(addr2).burnSunWattToken(addr1.address, 50)).to.be.revertedWith("Unauthorized: Only token owner can burn their tokens")
     })
     it("Burn - Should revert if the address is not in the client list", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address);
+        await contractDeployed.connect(owner).addClient(addr1.address, 50);
         await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 100)
 
         await expect(contractDeployed.connect(addr2).burnSunWattToken(addr2.address, 50)).to.be.revertedWith("This address is not a client adress")
     })
     it("Burn - Should revert if the address doesn't have any token", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address);
+        await contractDeployed.connect(owner).addClient(addr1.address, 50);
 
         await expect(contractDeployed.connect(addr1).burnSunWattToken(addr1.address, 50)).to.be.revertedWith("Can not burn Token as this address doesn't have any")
 
     })
     it("Burn - Should revert if the amount burn is higher than the address get", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address);
+        await contractDeployed.connect(owner).addClient(addr1.address, 50);
         await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 100)
 
         await expect(contractDeployed.connect(addr1).burnSunWattToken(addr1.address, 150)).to.be.revertedWith("Can not burn more Token than address get")
 
     })
     it("Burn - Should emit with the right amount of updated after burn", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address);
+        await contractDeployed.connect(owner).addClient(addr1.address, 50);
         await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 100)
 
         const totalMintedBeforeBurn = await contractDeployed.getTotalMinted(addr1.address);
@@ -182,7 +188,7 @@ describe("SunFi contract test", function () {
 
     // ::::::::::::: History FUNTION ::::::::::::: //
     it("History - Should return the correct mint history for an address ", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address);
+        await contractDeployed.connect(owner).addClient(addr1.address, 50);
         const mintAmount1 = 1000n;
         const mintAmount2 = 2000n;
 

@@ -151,6 +151,12 @@ export const contractAbi = [
                 "internalType": "address",
                 "name": "clientAdress",
                 "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "maxMintable",
+                "type": "uint256"
             }
         ],
         "name": "ClientRegistered",
@@ -179,6 +185,25 @@ export const contractAbi = [
             }
         ],
         "name": "FallbackCalled",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "client",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "newMaxMintable",
+                "type": "uint256"
+            }
+        ],
+        "name": "MaxMintableUpdated",
         "type": "event"
     },
     {
@@ -273,6 +298,11 @@ export const contractAbi = [
                 "internalType": "address",
                 "name": "_addr",
                 "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_mintableNbr",
+                "type": "uint256"
             }
         ],
         "name": "addClient",
@@ -403,8 +433,13 @@ export const contractAbi = [
         "outputs": [
             {
                 "internalType": "bool",
-                "name": "",
+                "name": "isRegistered",
                 "type": "bool"
+            },
+            {
+                "internalType": "uint256",
+                "name": "maxMintable",
+                "type": "uint256"
             }
         ],
         "stateMutability": "view",

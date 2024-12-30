@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi'
 import { contractAbi, contractAdress } from '@/app/constants/index.js';
 import { useToast } from "@/hooks/use-toast";
+import { getAddress } from 'ethers';
+
 
 const EnergyCounter = () => {
     const { address, isConnected } = useAccount(); // Vérifie si l'utilisateur est connecté
@@ -14,9 +16,14 @@ const EnergyCounter = () => {
     const [isClientLoading, setIsClientLoading] = useState(true);
     const [isClient, setIsClient] = useState(false);
     const [mintHistory, setMintHistory] = useState([]);
+    const [maxMintable, setMaxMintable] = useState(0);
+
 
 
     const { toast } = useToast();
+
+    const normalizedAddress = address ? getAddress(address) : null;
+
 
     // Lecture des tokens mintés
     const { refetch: fetchTokens } = useReadContract({
@@ -31,7 +38,7 @@ const EnergyCounter = () => {
         address: contractAdress,
         functionName: 'getClient',
         args: [address],
-        enable: false,
+        enable: !!normalizedAddress,
     })
 
 
@@ -169,6 +176,17 @@ const EnergyCounter = () => {
     };
     // Simulation de production d'énergie toutes les 10 secondes
     useEffect(() => {
+        const mintable = async () => {
+
+            const res = await fetchClientStatus();
+            console.log("tokenmintable", res.data[1]);
+            setMaxMintable(res.data[1])
+        }
+        mintable()
+        // console.log(result);
+
+        // const [, maxMintable] = result;
+        // setMaxMintable(maxMintable)
         const interval = setInterval(() => {
             generateEnergy();
         }, 10000); // Toutes les 10 secondes
@@ -178,61 +196,84 @@ const EnergyCounter = () => {
         return () => clearInterval(interval); // Nettoie l'intervalle lors du démontage
     }, []);
     return (
-        <div className='flex flex-col'>
-            <h2 className='text-2xl text-center font-bold py-5'>Bienvenue sur votre tableau de bord</h2>
-            <p>Convertissez votre production d'électricité en token pour générer du rendement.</p>
-            <div className='flex w-full justify-between my-4 gap-2'>
-                <div className='border-solid border-2 border-blue-300 rounded-md w-1/2 text-center py-4'>
-                    <h3 className='text-2xl font-bold'>Votre production d'électricité</h3>
-                    <p className='text-2xl'>⚡</p>
+        <div className="flex flex-col items-center w-full mt-10 p-6 bg-gray-50 rounded-lg shadow-lg">
+            <h2 className="text-4xl font-bold text-blue-600 mb-6">
+                Bienvenue sur votre tableau de bord
+            </h2>
+            <p className="text-lg text-gray-600 mb-8 text-center">
+                Convertissez votre production d'électricité en token pour générer du rendement.
+            </p>
+            <p className="text-lg text-gray-600 mb-1 text-center">
+                Actuellement, votre production d'éléctricité peut vous rapporter jusqu'à:
+            </p>
+            <p className='my-4 font-bold'>{maxMintable} KWH token / jour</p>
+
+            {/* Sections pour la production et le portefeuille */}
+            <div className="flex flex-wrap w-full justify-center gap-6 mb-8">
+                <div className="flex flex-col items-center bg-white border border-blue-300 rounded-lg p-6 shadow-md w-64">
+                    <h3 className="text-l text-center font-bold text-gray-700 mb-4">Votre production d'électricité</h3>
+                    <p className="text-3xl mb-4">⚡</p>
                     {energy > 0 ? (
-                        <>
-                            <p>Vous avez produit {energy.toFixed(2)} KwH</p>
-                            <p>Depuis la dernière conversion en token</p>
-                        </>
+                        <p className="text-center text-gray-600">
+                            Vous avez produit <strong>{energy.toFixed(2)} KwH</strong> depuis la dernière conversion en token.
+                        </p>
                     ) : (
-                        <>
-                            <p>Vous pourrez bientôt voir votre production ici</p>
-                        </>
+                        <p className="text-center text-gray-500">Vous pourrez bientôt voir votre production ici.</p>
                     )}
                 </div>
-                <div className='border-solid border-2 border-blue-300 rounded-md w-1/2 text-center py-4'>
-                    <h3 className='text-2xl font-bold'>Nombre de Jetons dans votre portefeuille</h3>
-                    <p className='text-4xl'>🪙</p>
-                    {(tokenCount > 0) ? (
-                        <p>
-                            Vous avez actuellement {tokenCount} tokens dans votre portefeuille
-                        </p>) :
-                        (
-                            <p>Vous pourrez bientôt voir vos tokens gagné ici</p>
 
-                        )}
+                <div className="flex flex-col items-center bg-white border border-blue-300 rounded-lg p-6 shadow-md w-64">
+                    <h3 className="text-l text-center font-bold text-gray-700 mb-4">Nombre de Jetons dans votre portefeuille</h3>
+                    <p className="text-4xl mb-4">🪙</p>
+                    {tokenCount > 0 ? (
+                        <p className="text-center text-gray-600">
+                            Vous avez actuellement <strong>{tokenCount}</strong> tokens dans votre portefeuille.
+                        </p>
+                    ) : (
+                        <p className="text-center text-gray-500">Vous pourrez bientôt voir vos tokens gagnés ici.</p>
+                    )}
                 </div>
             </div>
-            <div className='flex justify-center gap-2'>
-                <Button className='bg-blue-500 w-1/2 text-black font-bold' onClick={handleMint} disabled={!energy}>
+
+            {/* Boutons d'action */}
+            <div className="flex gap-4 mb-8">
+                <Button
+                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow"
+                    onClick={handleMint}
+                    disabled={!energy}
+                >
                     Mint de votre production
                 </Button>
-                <Button className='bg-red-500 w-1/2 text-black font-bold' onClick={fetchTokenCount} disabled={!tokenCount}>
+                <Button
+                    className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg shadow"
+                    onClick={fetchTokenCount}
+                    disabled={!tokenCount}
+                >
                     Actualiser votre portefeuille
                 </Button>
             </div>
-            <div className="my-4">
-                <h3 className="text-xl font-bold">Historique des Mint</h3>
 
+            {/* Historique des Mint */}
+            <div className="w-full max-w-4xl">
+                <h3 className="text-2xl font-bold text-gray-700 mb-4">Historique des Mint</h3>
                 {mintHistory.length > 0 ? (
-                    <ul >
+                    <ul className="bg-white rounded-lg shadow-md divide-y divide-gray-200">
                         {mintHistory.map((mint, index) => (
-                            <li key={index} className="flex justify-between border p-2 my-2 rounded-md shadow">
-                                <p><strong>Tokens minted :</strong> {mint.tokens}</p>
-                                <p><strong>Date :</strong> {mint.date}</p>
+                            <li key={index} className="flex justify-between items-center px-4 py-2">
+                                <p className="text-gray-600">
+                                    <strong>Tokens minted :</strong> {mint.tokens}
+                                </p>
+                                <p className="text-gray-600">
+                                    <strong>Date :</strong> {mint.date}
+                                </p>
                             </li>
                         ))}
                     </ul>
                 ) : (
-                    <p>Aucun mint effectué pour le moment</p>
+                    <p className="text-gray-500 text-center">
+                        Aucun mint effectué pour le moment.
+                    </p>
                 )}
-
             </div>
         </div>
     );
