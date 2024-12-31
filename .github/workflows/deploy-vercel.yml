@@ -7,9 +7,6 @@ env:
   NEXT_PUBLIC_RPC_URL: ${{ secrets.NEXT_PUBLIC_RPC_URL }}
 
 on:
-  pull_request:
-    branches:
-      - 'main'
   push:
     branches:
       - 'main'
