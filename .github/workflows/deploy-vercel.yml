@@ -7,9 +7,10 @@ env:
   NEXT_PUBLIC_RPC_URL: ${{ secrets.NEXT_PUBLIC_RPC_URL }}
 
 on:
+
   push:
     branches:
-      - 'main'
+      - 'develop'
 
 jobs:
   deploy:
