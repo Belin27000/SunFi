@@ -5,13 +5,18 @@ import Client from "@/components/shared/ClientDashboard";
 import { getAddress } from "ethers";
 import { useAccount, useReadContract } from "wagmi";
 import { contractAbi, contractAdress } from "../constants";
-
+// export const dynamic = 'force-dynamic';
 export default function Dashboard() {
     const { address, isConnected } = useAccount();
 
-    // Normalisez l'adresse de l'utilisateur connecté et du contrat
+    // Valider et normaliser l'adresse du contrat
+    if (!contractAdress || typeof contractAdress !== "string") {
+        throw new Error("Invalid contract address");
+    }
     const normalizedContractAddress = getAddress(contractAdress) as `0x${string}`;
-    const normalizedAddress = address ? getAddress(address) : null;
+
+    // Valider et normaliser l'adresse utilisateur
+    const normalizedAddress = address && typeof address === "string" ? getAddress(address) : null;
 
     // Récupérez si l'adresse connectée est un client enregistré
     const { data: isRegisteredClient, isLoading: isLoadingClient, isError: isErrorClient } = useReadContract({
@@ -59,6 +64,9 @@ export default function Dashboard() {
     const normalizedOwnerAddress = ownerAddress && typeof ownerAddress === "string"
         ? getAddress(ownerAddress)
         : null;
+    if (!normalizedOwnerAddress) {
+        console.error("Owner address is invalid or missing");
+    }
     if (normalizedAddress === normalizedOwnerAddress) {
         return (
             <div className="flex flex-col min-h-screen">
