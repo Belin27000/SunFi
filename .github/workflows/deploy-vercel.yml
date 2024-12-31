@@ -3,6 +3,8 @@ name: Deploy Frontend to Vercel
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  NEXT_PUBLIC_CONTRACT_ADDR: ${{ secrets.NEXT_PUBLIC_CONTRACT_ADDR }}
+  NEXT_PUBLIC_RPC_URL: ${{ secrets.NEXT_PUBLIC_RPC_URL }}
 
 on:
   pull_request:
