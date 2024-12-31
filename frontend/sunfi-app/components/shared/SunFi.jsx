@@ -18,6 +18,7 @@ const SunFi = () => {
     const { toast } = useToast();
     const [operation, setOperation] = useState(null);
     const [clientInfo, setClientInfo] = useState(null)
+    const [totalMinted, setTotalMinted] = useState(null)
 
 
     const { data, refetch } = useReadContract({
@@ -27,6 +28,12 @@ const SunFi = () => {
         args: [addr],
         enable: false,
     })
+    const { data: totalMintedData, refetch: refetchMinted } = useReadContract({
+        abi: contractAbi,
+        address: contractAdress,
+        functionName: 'getTotalMinted',
+        args: [addr],
+    });
     const { writeContract, data: hash, isPending: SetIsPending } = useWriteContract({
     });
     const { isLoading: isConfirming, isSuccess, isError, error } = useWaitForTransactionReceipt({ hash })
@@ -35,15 +42,18 @@ const SunFi = () => {
         setClientInfo(null)
         try {
             const { data } = await refetch();
-            console.log("tokTok", data);
+            const totalMintedData = await refetchMinted();
+            console.log("mintData", totalMintedData.data);
 
             if (data && Array.isArray(data)) {
                 const [isRegistered, maxMintable] = data;
+
 
                 setClientInfo({
                     isRegistered,
                     maxMintable,
                 });
+                setTotalMinted(totalMintedData.data)
                 if (isRegistered) {
                     toast({
                         title: "Adresse enregistrée",
@@ -202,6 +212,9 @@ const SunFi = () => {
                             </p>
                             <p className="text-sm text-gray-700">
                                 Nombre maximum de tokens mintables par jour : <span className="font-bold">{clientInfo.maxMintable} KWH token</span>
+                            </p>
+                            <p className="text-sm text-gray-700">
+                                Nombre de tokens de l'adresse: <span className="font-bold">{totalMinted} KWH token</span>
                             </p>
                         </>
                     ) : (

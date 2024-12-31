@@ -43,7 +43,28 @@ contract SunFi is ERC20, Ownable {
         }
         return (false, 0);
     }
+    // NOTE: This function is for testing purposes only. Remove in production.
 
+    function getClientData(
+        address _addr
+    )
+        external
+        view
+        returns (
+            bool isRegistered,
+            uint256 maxMintable,
+            uint256 unusedMintAllowance,
+            uint256 lastMintTimestamp
+        )
+    {
+        Client memory client = clients[_addr];
+        return (
+            client.isRegistered,
+            client.maxMintable,
+            client.unusedMintAllowance,
+            client.lastMintTimestamp
+        );
+    }
     // ::::::::::::: CLIENT REGISTRATION ::::::::::::: //
     function addClient(address _addr, uint256 _mintableNbr) external onlyOwner {
         require(_addr != owner(), "Owner cannot be registered as a client");
@@ -56,8 +77,8 @@ contract SunFi is ERC20, Ownable {
         clients[_addr] = Client({
             isRegistered: true,
             maxMintable: _mintableNbr,
-            unusedMintAllowance: 0,
-            lastMintTimestamp: 0
+            unusedMintAllowance: _mintableNbr,
+            lastMintTimestamp: block.timestamp
         });
 
         emit ClientRegistered(_addr, _mintableNbr);
@@ -87,6 +108,33 @@ contract SunFi is ERC20, Ownable {
             clients[recipient].isRegistered == true,
             "This address is not a client adress"
         );
+        Client storage client = clients[recipient];
+
+        //Calculate the number of days since last mint
+        uint256 currentTimestamp = block.timestamp;
+        uint256 daysElapsed = (currentTimestamp - client.lastMintTimestamp) /
+            1 days;
+
+        if (daysElapsed > 0) {
+            uint256 additionalAllowance = daysElapsed * client.maxMintable;
+
+            client.unusedMintAllowance =
+                client.maxMintable +
+                additionalAllowance;
+
+            //Optional limit the maximum token unused allowance
+            // if (client.unusedMintAllowance > client.maxMintable * 10) {
+            //     client.unusedMintAllowance = client.maxMintable * 10;
+            // }
+
+            // Reset the timestamp to the current day
+            client.lastMintTimestamp = currentTimestamp;
+        }
+        require(
+            amount <= client.unusedMintAllowance,
+            "Amount exceeds the maximum mintable tokens available"
+        );
+        client.unusedMintAllowance -= amount;
         _mint(recipient, amount);
         totalMinted[recipient].tokenAmount += amount;
 

@@ -112,12 +112,56 @@ describe("SunFi contract test", function () {
             .to.be.revertedWith("This address is not a client adress")
     })
     it("Mint - Should not revert mint tokens for a registered client", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address, 50);
+        await contractDeployed.connect(owner).addClient(addr1.address, 1500);
         await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 1000);
 
         const balance = await contractDeployed.balanceOf(addr1.address);
         await expect(balance).to.equal(1000);
 
+    })
+
+    it("Mint - Should allow minting up to maxMintable tokens per day", async function () {
+        await contractDeployed.connect(owner).addClient(addr1.address, 100);
+
+        await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 50);
+        const balance = await contractDeployed.balanceOf(addr1.address);
+        expect(balance).to.equal(50);
+
+        const client = await contractDeployed.getClient(addr1.address);
+        expect(client.maxMintable).to.equal(100);
+    })
+    it("Mint - Should revert if attempting to mint more than maxMintable tokens in a day", async function () {
+        await contractDeployed.connect(owner).addClient(addr1.address, 50);
+
+        // Try to mint 100 tokens (exceeds maxMintable)
+        await expect(
+            contractDeployed.connect(addr1).getSunWattToken(addr1.address, 100)
+        ).to.be.revertedWith("Amount exceeds the maximum mintable tokens available");
+    });
+
+    it("Mint - Should accumulate unused mint allowance over multiple days", async function () {
+        await contractDeployed.connect(owner).addClient(addr1.address, 50);
+
+        await ethers.provider.send("evm_increaseTime", [3 * 24 * 60 * 60]);
+        await ethers.provider.send("evm_mine", [])
+
+        await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 150);
+        const balance = await contractDeployed.balanceOf(addr1.address)
+        expect(balance).to.equal(150)
+
+    })
+    it("Mint -Should reset lastMintTimeStamp after minting", async function () {
+        await contractDeployed.connect(owner).addClient(addr1.address, 50);
+        const currentTimestamp = (await ethers.provider.getBlock("latest"))?.timestamp;
+
+        await ethers.provider.send("evm_increaseTime", [3 * 24 * 60 * 60]);
+        await ethers.provider.send("evm_mine", [])
+
+        await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 50);
+
+        const clientData = await contractDeployed.getClientData(addr1.address);
+        const updatedTimestamp = (await ethers.provider.getBlock("latest"))?.timestamp;
+        expect(clientData.lastMintTimestamp).to.equal(updatedTimestamp)
     })
     // ::::::::::::: Check Token ::::::::::::: //
     it("Check - Should revert if the address is not into client list", async function () {
@@ -127,7 +171,7 @@ describe("SunFi contract test", function () {
 
     })
     it("Check - Should return the correct total minted for an adress", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address, 50)
+        await contractDeployed.connect(owner).addClient(addr1.address, 150)
 
         await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 100)
 
@@ -146,13 +190,13 @@ describe("SunFi contract test", function () {
     })
     // ::::::::::::: BURN FUNTION ::::::::::::: //
     it("Burn - Should revert if the connect adress try to burn token from other address", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address, 50);
+        await contractDeployed.connect(owner).addClient(addr1.address, 150);
         await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 100)
 
         await expect(contractDeployed.connect(addr2).burnSunWattToken(addr1.address, 50)).to.be.revertedWith("Unauthorized: Only token owner can burn their tokens")
     })
     it("Burn - Should revert if the address is not in the client list", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address, 50);
+        await contractDeployed.connect(owner).addClient(addr1.address, 150);
         await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 100)
 
         await expect(contractDeployed.connect(addr2).burnSunWattToken(addr2.address, 50)).to.be.revertedWith("This address is not a client adress")
@@ -164,14 +208,14 @@ describe("SunFi contract test", function () {
 
     })
     it("Burn - Should revert if the amount burn is higher than the address get", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address, 50);
+        await contractDeployed.connect(owner).addClient(addr1.address, 150);
         await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 100)
 
         await expect(contractDeployed.connect(addr1).burnSunWattToken(addr1.address, 150)).to.be.revertedWith("Can not burn more Token than address get")
 
     })
     it("Burn - Should emit with the right amount of updated after burn", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address, 50);
+        await contractDeployed.connect(owner).addClient(addr1.address, 150);
         await contractDeployed.connect(addr1).getSunWattToken(addr1.address, 100)
 
         const totalMintedBeforeBurn = await contractDeployed.getTotalMinted(addr1.address);
@@ -188,9 +232,9 @@ describe("SunFi contract test", function () {
 
     // ::::::::::::: History FUNTION ::::::::::::: //
     it("History - Should return the correct mint history for an address ", async function () {
-        await contractDeployed.connect(owner).addClient(addr1.address, 50);
-        const mintAmount1 = 1000n;
-        const mintAmount2 = 2000n;
+        await contractDeployed.connect(owner).addClient(addr1.address, 150);
+        const mintAmount1 = 50n;
+        const mintAmount2 = 75n;
 
         const tx1 = await contractDeployed.connect(addr1).getSunWattToken(addr1.address, mintAmount1);
         const receipt1 = await tx1.wait();
