@@ -2,16 +2,13 @@
     "builds": [
         {
             "src": "frontend/sunfi-app/package.json",
-            "use": "@vercel/next",
-            "config": {
-                "distDir": ".next"
-            }
+            "use": "@vercel/next"
         }
     ],
     "routes": [
         {
             "src": "/(.*)",
-            "dest": "frontend/sunfi-app/.next/$1"
+            "dest": "/$1"
         }
     ]
 }
