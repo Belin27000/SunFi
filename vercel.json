@@ -8,7 +8,7 @@
     "routes": [
         {
             "src": "/(.*)",
-            "dest": "frontend/sunfi-app/$1"
+            "dest": "frontend/sunfi-app/.next/$1"
         }
     ]
 }
