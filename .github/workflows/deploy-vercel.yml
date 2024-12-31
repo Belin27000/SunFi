@@ -38,7 +38,7 @@ jobs:
 
       # Étape 4 : Accéder au repertoire du frontend
       - name: Navigate to Frontend Directory
-      working-directory: fontend/sunfi-app
+        working-directory: frontend/sunfi-app
       
       # Étape 5 : Installer les dépendances
       - name: Install Dependencies
