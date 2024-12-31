@@ -453,6 +453,40 @@ export const contractAbi = [
         "inputs": [
             {
                 "internalType": "address",
+                "name": "_addr",
+                "type": "address"
+            }
+        ],
+        "name": "getClientData",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "isRegistered",
+                "type": "bool"
+            },
+            {
+                "internalType": "uint256",
+                "name": "maxMintable",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "unusedMintAllowance",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "lastMintTimestamp",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
                 "name": "user",
                 "type": "address"
             }
