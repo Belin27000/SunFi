@@ -9,6 +9,9 @@ import { contractAbi, contractAdress } from "../constants";
 export default function Dashboard() {
     const { address, isConnected } = useAccount();
 
+    console.log("Contract Address:", contractAdress); // Debugging
+    console.log("Connected Address:", address); // Debugging
+
     // Normalisez l'adresse de l'utilisateur connecté et du contrat
     const normalizedContractAddress = getAddress(contractAdress);
     const normalizedAddress = address ? getAddress(address) : null;
@@ -30,6 +33,8 @@ export default function Dashboard() {
         enabled: isConnected,
     });
 
+    console.log("Registered Client Data:", isRegisteredClient);
+    console.log("Owner Address Data:", ownerAddress);
     // Affichage si l'utilisateur n'est pas connecté
     if (!isConnected) {
         return (
