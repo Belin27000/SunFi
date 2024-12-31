@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { contractAdress, contractAbi } from "@/app/constants/index.js";
 import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
-import { publicClient } from "@/utils/client.js";
+// import { publicClient } from "@/utils/client.js";
 import { CheckCircle, PlusCircle, Trash } from "lucide-react";
 
 
