@@ -9,11 +9,8 @@ import { contractAbi, contractAdress } from "../constants";
 export default function Dashboard() {
     const { address, isConnected } = useAccount();
 
-    console.log("Contract Address:", contractAdress); // Debugging
-    console.log("Connected Address:", address); // Debugging
-
     // Normalisez l'adresse de l'utilisateur connecté et du contrat
-    const normalizedContractAddress = getAddress(contractAdress);
+    const normalizedContractAddress = getAddress(contractAdress) as `0x${string}`;
     const normalizedAddress = address ? getAddress(address) : null;
 
     // Récupérez si l'adresse connectée est un client enregistré
@@ -22,7 +19,6 @@ export default function Dashboard() {
         address: normalizedContractAddress,
         functionName: "getClient",
         args: [normalizedAddress],
-        enabled: !!normalizedAddress,
     });
 
     // Récupérez l'adresse du propriétaire du contrat
@@ -30,11 +26,8 @@ export default function Dashboard() {
         abi: contractAbi,
         address: normalizedContractAddress,
         functionName: "owner",
-        enabled: isConnected,
     });
 
-    console.log("Registered Client Data:", isRegisteredClient);
-    console.log("Owner Address Data:", ownerAddress);
     // Affichage si l'utilisateur n'est pas connecté
     if (!isConnected) {
         return (
@@ -63,7 +56,9 @@ export default function Dashboard() {
     }
 
     // Vérifiez si l'utilisateur connecté est le propriétaire du contrat
-    const normalizedOwnerAddress = ownerAddress ? getAddress(ownerAddress) : null;
+    const normalizedOwnerAddress = ownerAddress && typeof ownerAddress === "string"
+        ? getAddress(ownerAddress)
+        : null;
     if (normalizedAddress === normalizedOwnerAddress) {
         return (
             <div className="flex flex-col min-h-screen">
@@ -75,7 +70,7 @@ export default function Dashboard() {
     }
 
     // Vérifiez si l'utilisateur est un client enregistré
-    if (!isRegisteredClient || isRegisteredClient[0] === false) {
+    if (!isRegisteredClient || !Array.isArray(isRegisteredClient) || isRegisteredClient[0] === false) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <p>Vous n'êtes pas enregistré comme client. Veuillez contacter l&apos;'administrateur.</p>
