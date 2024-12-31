@@ -73,7 +73,7 @@ export default function Dashboard() {
     if (!isRegisteredClient || isRegisteredClient[0] === false) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <p>Vous n'êtes pas enregistré comme client. Veuillez contacter l'administrateur.</p>
+                <p>Vous n'êtes pas enregistré comme client. Veuillez contacter l&apos;'administrateur.</p>
             </div>
         );
     }

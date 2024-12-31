@@ -9,7 +9,7 @@ import { getAddress } from 'ethers';
 
 
 const EnergyCounter = () => {
-    const { address, isConnected } = useAccount(); // Vérifie si l'utilisateur est connecté
+    const { address } = useAccount(); // Vérifie si l'utilisateur est connecté
     const [energy, setEnergy] = useState(0);
     const [transactionHash, setTransactionHash] = useState(null);
     const [tokenCount, setTokenCount] = useState(0);
