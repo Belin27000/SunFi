@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 export default function Timeline() {
-    const [hoveredStep, setHoveredStep] = useState(null);
+    const [hoveredStep, setHoveredStep] = useState<number | null>(null);
 
     const steps = [
         {
