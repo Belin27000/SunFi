@@ -2,9 +2,10 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { assert, expect } from "chai";
 import hre, { ethers } from "hardhat";
-import { SunFi } from "../../typechain-types";
-import { fetchContractData, fetchSupplierRates } from "../../ignition/modules/aave-project/aaveDataFetcher";
-
+import { SunFi, MockUSDC } from "../../typechain-types";
+// import { fetchContractData, fetchSupplierRates } from "../../ignition/modules/aave-project/aaveDataFetcher";
+import * as dotenv from "dotenv";
+dotenv.config();
 
 
 describe("SunFi contract test", function () {
@@ -16,13 +17,51 @@ describe("SunFi contract test", function () {
     let contractAdress: string;
 
 
+    // async function deployContractFixture() {
+    //     [owner, addr1, addr2] = await ethers.getSigners();
+
+    //     //------------------//
+    //     const poolAddress = process.env.POOL_CONTRACT_ADDRESS;
+    //     const usdcAddress = process.env.USDC_CONTRACT_ADDRESS;
+
+    //     if (!poolAddress || !usdcAddress) {
+    //         throw new Error("POOL_CONTRACT_ADDRESS or USDC_CONTRACT_ADDRESS is not defined in the environment variables.");
+    //     }
+    //     //------------------//
+    //     contractDeployed = await hre.ethers.deployContract("SunFi", [poolAddress, usdcAddress])
+    //     // contractDeployed = await hre.ethers.deployContract("SunFi")
+    //     contractAdress = await contractDeployed.getAddress()
+    //     console.log(contractAdress)
+    //     // return { contractDeployed, owner, addr1, addr2, contractAdress }
+    //     return { contractDeployed, owner, addr1, addr2, contractAdress, poolAddress, usdcAddress };
+
+    // }
+    let mockUSDC: MockUSDC; // Ajout d'une référence pour le contrat mock USDC
+
     async function deployContractFixture() {
         [owner, addr1, addr2] = await ethers.getSigners();
 
-        contractDeployed = await hre.ethers.deployContract("SunFi")
-        contractAdress = await contractDeployed.getAddress()
+        // MockUSDC
+        const MockUSDCFactory = await ethers.getContractFactory("MockUSDC");
+        mockUSDC = await MockUSDCFactory.deploy();
+        // await mockUSDC.deployed();
+        const usdcAddress = process.env.USDC_CONTRACT_ADDRESS || mockUSDC.getAddress();
 
-        return { contractDeployed, owner, addr1, addr2, contractAdress }
+        // Pool Address
+        const poolAddress = process.env.POOL_CONTRACT_ADDRESS;
+        if (!poolAddress) {
+            throw new Error("POOL_CONTRACT_ADDRESS is not defined in the environment variables.");
+        }
+
+        // Déploiement de SunFi
+        const SunFiFactory = await ethers.getContractFactory("SunFi");
+        contractDeployed = await SunFiFactory.deploy(poolAddress, usdcAddress);
+        console.log("contractDeployed", contractDeployed.getAddress());
+        console.log("Owner", owner.address);
+
+        // await contractDeployed.deployed();
+
+        return { contractDeployed, mockUSDC, owner, addr1, addr2, poolAddress, usdcAddress };
     }
     // ::::::::::::: FONCTIONS UTILITAIRES ::::::::::::: //
 
@@ -299,17 +338,123 @@ describe("SunFi contract test", function () {
 
     })
 
+    // it("AAVE - Should fetch data from Aave protocol", async function () {
+    //     const data = await fetchContractData()
+    //     const rate = await fetchSupplierRates()
+
+    //     console.log(rate);
+    //     // console.log(data.reserves);
+    //     await expect(data).to.have.property('reserves');
+    //     await expect(data).to.have.property('userReserves');
+
+    // })
+    // it.only("AAVE - Should transfer 100 USDC to the contract and supply to Aave", async function () {
+    //     // Étape 1 : Récupérer l'interface du contrat USDC
+    //     const usdcContract = await ethers.getContractAt("IERC20", process.env.USDC_CONTRACT_ADDRESS);
+
+    //     // Étape 2 : Vérifier le solde initial du propriétaire
+    //     const amountToTransfer = ethers.parseUnits("100", 6); // 100 USDC
+    //     const ownerBalanceBefore = await usdcContract.balanceOf(owner.address);
+    //     expect(ownerBalanceBefore).to.be.gte(amountToTransfer); // Vérifie que le propriétaire a assez de USDC
+
+    //     // Étape 3 : Approuver le transfert des USDC au contrat déployé
+    //     await usdcContract.connect(owner).approve(contractDeployed.getAddress(), amountToTransfer);
+
+    //     // Étape 4 : Transférer les USDC vers le contrat déployé
+    //     await contractDeployed.connect(owner).depositUSDC(amountToTransfer);
+
+    //     // Vérifier que les USDC ont bien été transférés au contrat
+    //     const contractBalance = await usdcContract.balanceOf(contractDeployed.getAddress());
+    //     expect(contractBalance).to.equal(amountToTransfer);
+
+    //     // Étape 5 : Fournir les USDC à Aave via la fonction du contrat
+    //     await contractDeployed.connect(owner).supplyToAave(amountToTransfer);
+
+    //     // Vérifier que le solde de USDC du contrat est maintenant à 0
+    //     const finalContractBalance = await usdcContract.balanceOf(contractDeployed.getAddress());
+    //     expect(finalContractBalance).to.equal(0);
+
+    //     // // Vérifier que le contrat a bien reçu des aTokens en retour (optionnel)
+    //     // const aTokenBalance = await usdcContract.balanceOf(process.env.ATOKEN_CONTRACT_ADDRESS);
+    //     // console.log("aToken balance after supply:", aTokenBalance.toString());
+    // });
+    // it.only("AAVE - Should supply USDC to Aave", async function () {
+    //     const usdcContract = await ethers.getContractAt("IERC20", process.env.USDC_CONTRACT_ADDRESS);
+    //     const initialBalance = await usdcContract.balanceOf(contractDeployed.getAddress());
+
+    //     // Mint USDC to contract
+    //     const amount = ethers.parseUnits("100", 6); // 100 USDC
+    //     await usdcContract.mint(contractDeployed.getAddress(), amount);
+
+    //     // Approve and supply to Aave
+    //     await contractDeployed.supplyToAave(amount);
+
+    //     const finalBalance = await usdcContract.balanceOf(contractDeployed.getAddress());
+    //     expect(finalBalance).to.equal(0); // All USDC should be supplied
+    // });
+    // it.only("AAVE - Should withdraw USDC from Aave", async function () {
+    //     const usdcContract = await ethers.getContractAt("IERC20", process.env.USDC_CONTRACT_ADDRESS);
+
+    //     // Mint USDC and supply to Aave
+    //     const amount = ethers.parseUnits("100", 6); // 100 USDC
+    //     await usdcContract.mint(contractDeployed.getAddress(), amount);
+    //     await contractDeployed.supplyToAave(amount);
+
+    //     // Withdraw from Aave
+    //     await contractDeployed.withdrawFromAave(amount);
+
+    //     const finalBalance = await usdcContract.balanceOf(contractDeployed.getAddress());
+    //     expect(finalBalance).to.equal(amount); // USDC should be returned
+    // });
+    it.only("AAVE - Should transfer 100 USDC to the contract and supply to Aave", async function () {
+        // Mint 100 USDC
+        const amountToMint = ethers.parseUnits("100", 10); // 100 USDC
+
+        // Étape 1 : Mint de 100 USDC
+        const balanceBeforeMint = await mockUSDC.balanceOf(owner.address);
+        await mockUSDC.connect(owner).mint(owner.address, amountToMint);
+        const balanceAfterMint = await mockUSDC.balanceOf(owner.address);
+
+        console.log("Balance avant mint:", balanceBeforeMint.toString());
+        console.log("Balance après mint:", balanceAfterMint.toString());
+        // await mockUSDC.connect(owner).mint(owner.address, amountToMint);
+
+
+        // Vérifiez que l'owner a bien reçu les USDC
+        const ownerBalanceBefore = await mockUSDC.balanceOf(owner.address);
+        // console.log("Owner balance before:", ownerBalanceBefore.toString());
+
+        expect(ownerBalanceBefore).to.equal(balanceBeforeMint + amountToMint);
+
+
+        // // Approuvez le contrat SunFi à utiliser les USDC
+        await mockUSDC.connect(owner).approve(contractDeployed.getAddress(), amountToMint);
+
+        const allowance = await mockUSDC.allowance(owner.address, contractDeployed.getAddress());
+        console.log("Allowance:", allowance.toString());
+        expect(allowance).to.equal(amountToMint);
+
+        // // Déposez les USDC dans SunFi
+        await contractDeployed.connect(owner).depositUSDC(amountToMint);
+
+        // // Vérifiez que SunFi a bien reçu les USDC
+        const contractBalance = await mockUSDC.balanceOf(contractDeployed.getAddress());
+        console.log("Contract balance after deposit:", contractBalance.toString());
+        expect(contractBalance).to.equal(amountToMint);
+        // expect(contractBalance).to.equal(amountToMint);
+
+        // // Approuvez le Pool à utiliser les USDC détenus par SunFi
+        // await contractDeployed.connect(owner).supplyToAave(amountToMint);
+
+        // // Vérifiez que SunFi n'a plus de USDC après transfert vers Aave
+        // const finalContractBalance = await mockUSDC.balanceOf(contractDeployed.getAddress());
+        // expect(finalContractBalance).to.equal(0);
+
+        // console.log("Contract balance after deposit:", contractBalance.toString());
+        // console.log("Final contract balance after supply:", finalContractBalance.toString());
+    });
+
 })
 
-describe('Aave Data Fetcher', function () {
-    it("Should fetch data from Aave protocol", async function () {
-        const data = await fetchContractData()
-        const rate = await fetchSupplierRates()
-
-        console.log(rate);
-        // console.log(data.reserves);
-        await expect(data).to.have.property('reserves');
-        await expect(data).to.have.property('userReserves');
-
-    })
-})
+// describe('Aave Data Fetcher', function () {
+// })

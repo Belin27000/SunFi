@@ -5,7 +5,26 @@ pragma solidity ^0.8.27;
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+interface IPool {
+    function supply(
+        address asset,
+        uint256 amount,
+        address onBehalfOf,
+        uint referralCode
+    ) external;
+    function withdraw(
+        address asset,
+        uint256 amount,
+        address to
+    ) external returns (uint256);
+}
+
 contract SunFi is ERC20, Ownable {
+    address public poolAddress; // Adresse du Pool d'Aave
+    address public usdcAddress; // Adresse du contrat USDC
+
     struct Client {
         bool isRegistered;
         uint256 maxMintable;
@@ -27,12 +46,71 @@ contract SunFi is ERC20, Ownable {
     event ClientRegistered(address clientAdress, uint256 maxMintable);
     event TokenMinted(address indexed recipient, uint256 amount);
     event MaxMintableUpdated(address indexed client, uint256 newMaxMintable);
-
     event ReceivedEther(address sender, uint256 amount);
     event FallbackCalled(address sender, uint256 amount, bytes data);
 
-    constructor() payable Ownable(msg.sender) ERC20("SunWatt", "KWH") {}
+    constructor(
+        address _poolAddress,
+        address _usdcAddress
+    ) payable Ownable(msg.sender) ERC20("SunWatt", "KWH") {
+        poolAddress = _poolAddress;
+        usdcAddress = _usdcAddress;
+    }
+    // ::::::::::::: INTERACTIONS WITH AAVE ::::::::::::: //
+    function depositUSDC(uint256 amount) external {
+        IERC20 usdc = IERC20(usdcAddress);
 
+        uint256 allowance = usdc.allowance(msg.sender, address(this));
+        uint256 balance = usdc.balanceOf(msg.sender);
+
+        console.log("Allowance for SunFi:", allowance);
+        console.log("Sender balance:", balance);
+        console.log("Amount to deposit:", amount);
+
+        require(allowance >= amount, "Insufficient allowance");
+        require(balance >= amount, "Insufficient balance");
+
+        bool success = usdc.transferFrom(msg.sender, address(this), amount);
+        require(success, "Transfer failed");
+
+        emit ReceivedEther(msg.sender, amount);
+    }
+    /**
+     * @dev Approves and supplies USDC to the Aave Pool
+     * @param amount Amount of USDC to supply
+     */
+    function supplyToAave(uint256 amount) external onlyOwner {
+        require(amount > 0, "Amount must be greater than zero");
+        require(
+            IERC20(usdcAddress).balanceOf(address(this)) >= amount,
+            "Insufficient USDC balance in contract"
+        );
+
+        // Approve Aave Pool to spend USDC
+        IERC20(usdcAddress).approve(poolAddress, amount);
+
+        // Supply USDC to Aave Pool
+        IPool(poolAddress).supply(usdcAddress, amount, address(this), 0);
+
+        console.log("Supplied", amount, "USDC to Aave Pool");
+    }
+
+    /**
+     * @dev Withdraws USDC from Aave Pool
+     * @param amount Amount of USDC to withdraw
+     */
+    function withdrawFromAave(uint256 amount) external onlyOwner {
+        require(amount > 0, "Amount must be greater than zero");
+
+        uint256 withdrawnAmount = IPool(poolAddress).withdraw(
+            usdcAddress,
+            amount,
+            address(this)
+        );
+        require(withdrawnAmount > 0, "Withdrawal failed");
+
+        console.log("Withdrawn", withdrawnAmount, "USDC from Aave Pool");
+    }
     // ::::::::::::: GETTERS ::::::::::::: //
 
     function getClient(
