@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
 // Uncomment this line to use console.log
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 contract SunFi is ERC20, Ownable {
     struct Client {
         bool isRegistered;
@@ -15,6 +16,7 @@ contract SunFi is ERC20, Ownable {
     struct walletAmount {
         uint256 tokenAmount;
     }
+
     //Structure de stockage de l'historique des mint de tokens
     struct MintRecord {
         uint256 amount;
@@ -23,6 +25,7 @@ contract SunFi is ERC20, Ownable {
     mapping(address => Client) clients;
     mapping(address => walletAmount) totalMinted;
     mapping(address => MintRecord[]) public mintHistory;
+    mapping(address => bool) private authorizedMinters;
 
     event ClientRegistered(address clientAdress, uint256 maxMintable);
     event TokenMinted(address indexed recipient, uint256 amount);
@@ -31,6 +34,11 @@ contract SunFi is ERC20, Ownable {
     event ReceivedEther(address sender, uint256 amount);
     event FallbackCalled(address sender, uint256 amount, bytes data);
 
+    // Modifier pour restreindre l'accès à `mint`
+    modifier onlyAuthorized() {
+        require(authorizedMinters[msg.sender], "Not authorized to mint");
+        _;
+    }
     constructor() payable Ownable(msg.sender) ERC20("SunWatt", "KWH") {}
 
     // ::::::::::::: GETTERS ::::::::::::: //
@@ -145,6 +153,23 @@ contract SunFi is ERC20, Ownable {
         mintHistory[recipient].push(record);
 
         emit TokenMinted(recipient, amount);
+    }
+
+    // ::::::::::::: Mint Rewards Token ::::::::::::: //
+
+    // Ajouter une fonction pour autoriser un contrat spécifique
+    function authorizeMinter(address minter) external onlyOwner {
+        authorizedMinters[minter] = true;
+    }
+
+    // Supprimer l'autorisation d'un minter
+    function revokeMinter(address minter) external onlyOwner {
+        authorizedMinters[minter] = false;
+    }
+
+    // Mise à jour de la fonction `mint`
+    function mint(address to, uint256 amount) external onlyAuthorized {
+        _mint(to, amount);
     }
     // ::::::::::::: Burn Token ::::::::::::: //
     function burnSunWattToken(address recipient, uint amount) external {

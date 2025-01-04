@@ -8,7 +8,14 @@ const LockModule = buildModule("SunFi", (m) => {
 
   const sunFi = m.contract("SunFi");
 
-  return { sunFi };
+  const stakingContract = m.contract("StakingContract", [sunFi])
+
+  m.call(sunFi, "authorizeMinter", [stakingContract]);
+
+  // console.log("SunFi Name:", sunFi.contractName);
+  // console.log("Staking Contract Liquidity Rate:", stakingContract);
+
+  return { sunFi, stakingContract };
 });
 
 export default LockModule;

@@ -1,13 +1,16 @@
 import { ethers } from "ethers";
 import { UiIncentiveDataProvider, UiPoolDataProvider, ChainId } from "@aave/contract-helpers";
 import * as markets from '@bgd-labs/aave-address-book';
-
+import * as dotenv from 'dotenv';
+dotenv.config()
 
 const provider = new ethers.providers.JsonRpcProvider(
     'https://eth-mainnet.public.blastapi.io',
 )
+const ownerPubAddrr = process.env.PUBLIC_ADDRESS_WALLET
 
-const currentAccount = "0xf6ec695DdE2970Dd8D76ad5aD99B89CC89661889";
+// const currentAccount = "0xf6ec695DdE2970Dd8D76ad5aD99B89CC89661889";
+const currentAccount = ownerPubAddrr;
 
 // Instances des contrats d'Aave
 const poolDataProviderContract = new UiPoolDataProvider({
