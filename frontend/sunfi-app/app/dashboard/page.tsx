@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import NotConnected from "../../components/shared/NotConnected";
 import SunFi from "@/components/shared/SunFi";
 import Client from "@/components/shared/ClientDashboard";
-import { getAddress } from "ethers";
+// import { getAddress } from "ethers";
 import { useAccount, useReadContract } from "wagmi";
 import { contractAbi, contractAdress } from "@/app/constants/index";
 export default function Dashboard() {

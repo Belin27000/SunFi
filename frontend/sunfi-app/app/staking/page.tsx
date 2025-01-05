@@ -2,7 +2,6 @@
 
 import { contractAbi, contractAdress } from '@/app/constants/index.js';
 import {
-    writeContract,
     useAccount,
     useWriteContract,
     useWaitForTransactionReceipt,
@@ -14,7 +13,6 @@ import { fetchSupplierRates } from "@/lib/aave/aaveFetcher";
 import { ethers, BigNumber } from "ethers";
 import { useToast } from '@/hooks/use-toast';
 import { estimateGas, readContract } from 'wagmi/actions'; // Correct imports for wagmi actions
-import { config } from '../../utils/client'
 
 
 const StakingPage = () => {
@@ -33,7 +31,7 @@ const StakingPage = () => {
 
     const { refetch: fetchLiquidityRate } = useReadContract({
         abi: stakingContractAbi,
-        address: stakingContractAddress,
+        address: stakingContractAddress as `0x${string}`,
         functionName: "updateLiquidityRate",
         args: [address]
     });
@@ -48,14 +46,14 @@ const StakingPage = () => {
     // Lire les données de staking de l'utilisateur
     const { refetch: fetchUserStake } = useReadContract({
         abi: stakingContractAbi,
-        address: stakingContractAddress,
+        address: stakingContractAddress as `0x${string}`,
         functionName: "getStake",
         args: [address],
     });
     // Calculer les récompenses
     const { refetch: fetchRewards } = useReadContract({
         abi: stakingContractAbi,
-        address: stakingContractAddress,
+        address: stakingContractAddress as `0x${string}`,
         functionName: "calculateRewards",
         args: [address],
     });
@@ -74,7 +72,7 @@ const StakingPage = () => {
     // Lecture des tokens mintés
     const { refetch: fetchTokens } = useReadContract({
         abi: contractAbi,
-        address: contractAdress,
+        address: contractAdress as `0x${string}`,
         functionName: "getTotalMinted",
         args: [address],
     });
@@ -166,7 +164,9 @@ const StakingPage = () => {
                 console.log("Approuvé :", approved);
             });
         } catch (err) {
-            console.error("Erreur lors de l'écoute des événements :", err.message || err);
+            if (err instanceof Error) {
+                console.error("Erreur lors de l'écoute des événements :", err.message || err);
+            }
         }
     };
 
@@ -187,21 +187,17 @@ const StakingPage = () => {
     }, []);
 
     // Fonction pour gérer le changement de l'input utilisateur
-    const handleStakeInputChange = (e) => {
+    const handleStakeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value;
         setStakeInputDisplay(inputValue);
-        console.log("inputValue===>", inputValue);
 
         if (!isNaN(inputValue) && inputValue !== "") {
-            console.log("inputValue===>", inputValue);
 
             const valueInWei = ethers.utils.parseUnits(inputValue, 18); // Convertir en wei
-            console.log("inputValue convert===>", valueInWei);
             setStakeInput(valueInWei); // Stocker la valeur en wei
         } else {
             setStakeInput(ethers.BigNumber.from(0)); // Réinitialiser si l'input est invalide
         }
-        console.log("stakeInput===>", stakeInput);
     };
     // Handle Staking
     const handleStake = async () => {
@@ -209,10 +205,7 @@ const StakingPage = () => {
         try {
             // const amountInWei = ethers.utils.parseUnits(stakeInput.toString(), 18);
             const amountInWei = stakeInput;
-            console.log("amountInWei ====> au click", amountInWei);
-            console.log("tokenCount ====> au click", tokenCount);
             const tokenCountInWei = ethers.utils.parseUnits(tokenCount.toString(), 18);
-            console.log("tokenCountInWei ====> au click", tokenCountInWei);
 
             if (stakeInput.gt(tokenCountInWei)) {
                 toast({
@@ -228,7 +221,7 @@ const StakingPage = () => {
             // Vérifiez l'allowance
             const isAllowanceSufficient = await checkAllowance();
             if (!isAllowanceSufficient) {
-                console.log("Demande d'approbation en cours...");
+                // console.log("Demande d'approbation en cours...");
                 await handleApprove();
             }
             await writeContract({
@@ -270,8 +263,7 @@ const StakingPage = () => {
         }
     };
     const handleUnstake = async () => {
-        res = "it works"
-        console.log(res);
+        console.log("future unstake ICI");
 
     }
 
@@ -280,14 +272,12 @@ const StakingPage = () => {
         try {
             const rate = await handleUpdateRateFromAave();
             const userStake = await fetchUserStake();
-            console.log("userStake===>", userStake);
 
             if (Array.isArray(userStake.data) && userStake.data.length > 0) {
                 const stakeAmount = userStake.data[0];
                 setStakedAmount(Number(stakeAmount) / 1e36 || 0);
             }
             // const stakedAmount = ethers.utils.formatUnits(userStake.data[0], 18);
-            // console.log("stakedAmount====>", stakedAmount);
 
             // setStakedAmount(Number(stakedAmount));
 
@@ -297,7 +287,7 @@ const StakingPage = () => {
             setRewards(Number(userRewards?.data) / 1e18);
             setTokenCount(Number(availableToken?.data) || 0);
             // setTokenCount(Number(ethers.utils.formatUnits(availableToken?.data, 18)) || 0);
-            setAvailabletokenDisplay(availableToken?.data)
+            setAvailabletokenDisplay(availableToken?.data as number)
         } catch (err) {
             console.error("Erreur lors de la récupération des données :", err);
         }
