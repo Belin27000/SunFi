@@ -9,9 +9,8 @@ const provider = new ethers.providers.JsonRpcProvider(
 )
 // const ownerPubAddrr = process.env.PUBLIC_ADDRESS_WALLET
 
-// const currentAccount = "0xf6ec695DdE2970Dd8D76ad5aD99B89CC89661889";
 const currentAccount = process.env.PUBLIC_ADDRESS_WALLET;
-if (!currentAccount) {
+if (!process.env.PUBLIC_ADDRESS_WALLET) {
     throw new Error("PUBLIC_ADDRESS_WALLET is not defined in your environment variables.");
 }
 // Instances des contrats d'Aave
