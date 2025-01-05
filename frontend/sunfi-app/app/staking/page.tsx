@@ -57,11 +57,11 @@ const StakingPage = () => {
     });
 
     // Fonction de unstaking
-    const { writeContract: unstakeTokens, data: unstakehash } = useWriteContract({
-        abi: stakingContractAbi,
-        address: stakingContractAddress,
-        functionName: "unstake",
-    });
+    // const { writeContract: unstakeTokens, data: unstakehash } = useWriteContract({
+    //     abi: stakingContractAbi,
+    //     address: stakingContractAddress,
+    //     functionName: "unstake",
+    // });
     // Lecture des tokens mintés
     const { refetch: fetchTokens } = useReadContract({
         abi: contractAbi,
@@ -91,7 +91,6 @@ const StakingPage = () => {
                 address: contractAdress as `0x${string}`,
                 functionName: "allowance",
                 args: [address, stakingContractAddress],
-                watch: true,
             });
 
             const stakeAmountInWei = ethers.utils.parseUnits(stakeInput.toString(), 18);
@@ -184,7 +183,10 @@ const StakingPage = () => {
         const inputValue = e.target.value;
         setStakeInputDisplay(inputValue);
 
-        if (!isNaN(inputValue) && inputValue !== "") {
+        const numericValue = parseFloat(inputValue);
+
+
+        if (!isNaN(numericValue) && inputValue !== "") {
 
             const valueInWei = ethers.utils.parseUnits(inputValue, 18); // Convertir en wei
             setStakeInput(valueInWei); // Stocker la valeur en wei
