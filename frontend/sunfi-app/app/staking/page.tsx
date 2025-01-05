@@ -35,13 +35,6 @@ const StakingPage = () => {
         functionName: "updateLiquidityRate",
         args: [address]
     });
-    // Fonction pour mettre à jour le taux de liquidité
-    const { writeAsync: updateLiquidityRate } = useWriteContract({
-        abi: stakingContractAbi,
-        address: stakingContractAddress,
-        functionName: "updateLiquidityRate",
-        args: [liquidityRate]
-    });
 
     // Lire les données de staking de l'utilisateur
     const { refetch: fetchUserStake } = useReadContract({
