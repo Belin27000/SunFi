@@ -2,7 +2,6 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 export const stakingContractAddress = process.env.NEXT_PUBLIC_STAKING_CONTRACT_ADDR || "";
-console.log("Environment Variable - NEXT_PUBLIC_CONTRACT_ADDR:", process.env.NEXT_PUBLIC_STAKING_CONTRACT_ADDR);
 if (!stakingContractAddress || typeof stakingContractAddress !== "string" || !stakingContractAddress.startsWith("0x") || stakingContractAddress.length !== 42) {
     console.error("Invalid contract address in environment variable");
     throw new Error("Invalid contract address in environment variable");
