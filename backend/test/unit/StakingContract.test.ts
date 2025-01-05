@@ -90,5 +90,13 @@ describe("StakingContract", function () {
         const balanceBigInt = BigInt(balance.toString());
         expect(balanceBigInt).to.be.closeTo(expectedBalance, tolerance);
     });
+    it("AAVE - Should fetch data from Aave protocol", async function () {
+        const data = await fetchContractData()
+        const rate = await fetchSupplierRates()
 
+        // console.log(data.reserves);
+        await expect(data).to.have.property('reserves');
+        await expect(data).to.have.property('userReserves');
+
+    })
 })

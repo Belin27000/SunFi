@@ -6,6 +6,7 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadCont
 import { contractAbi, contractAdress } from '@/app/constants/index.js';
 import { useToast } from "@/hooks/use-toast";
 import { getAddress } from 'ethers';
+import Link from "next/link.js"
 
 
 const EnergyCounter = () => {
@@ -22,7 +23,7 @@ const EnergyCounter = () => {
 
     const { toast } = useToast();
 
-    const normalizedAddress = address ? getAddress(address) : null;
+    const normalizedAddress = address ? address : null;
 
 
     // Lecture des tokens mintés
@@ -54,7 +55,8 @@ const EnergyCounter = () => {
 
     // Générer de l'énergie aléatoire
     const generateEnergy = () => {
-        setEnergy((prevEnergy) => prevEnergy + Math.random() * 0.01);
+        setEnergy((prevEnergy) => prevEnergy + Math.random() * 10);
+        // setEnergy((prevEnergy) => prevEnergy + Math.random() * 0.01);
     };
     // Vérifie si l'adresse connectée est un client
     const checkClientStatus = async () => {
@@ -151,9 +153,9 @@ const EnergyCounter = () => {
         try {
             const result = await fetchMintHistoryContract();
             // console.log("Données brutes retournées :", result);
-            console.log("Data from fetchMintHistoryContract:", result);
+            // console.log("Data from fetchMintHistoryContract:", result);
 
-            if (result.data.length > 0) {
+            if (result && result.data && result.data.length > 0) {
                 // Déstructuration des données retournées par le contrat
                 const amounts = result.data[0];
                 const timestamps = result.data[1];
@@ -166,7 +168,7 @@ const EnergyCounter = () => {
                 }));
 
                 setMintHistory(history); // Mettre à jour l’état avec l’historique
-                console.log("Mint History:", history); // Debugging
+                // console.log("Mint History:", history); // Debugging
             } else {
                 console.log("Aucun historique trouvé.");
             }
@@ -179,7 +181,7 @@ const EnergyCounter = () => {
         const mintable = async () => {
 
             const res = await fetchClientStatus();
-            console.log("tokenmintable", res.data[1]);
+            // console.log("tokenmintable", res.data[1]);
             setMaxMintable(res.data[1])
         }
         mintable()
@@ -248,8 +250,11 @@ const EnergyCounter = () => {
                     className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg shadow"
                     onClick={fetchTokenCount}
                     disabled={!tokenCount}
+
                 >
-                    Actualiser votre portefeuille
+                    <Link className='text-center ' href="/staking">Stake / Unstake
+                    </Link>
+
                 </Button>
             </div>
 

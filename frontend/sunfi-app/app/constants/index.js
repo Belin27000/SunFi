@@ -3,7 +3,6 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 export const contractAdress = process.env.NEXT_PUBLIC_CONTRACT_ADDR || "";
-console.log("Environment Variable - NEXT_PUBLIC_CONTRACT_ADDR:", process.env.NEXT_PUBLIC_CONTRACT_ADDR);
 if (!contractAdress || typeof contractAdress !== "string" || !contractAdress.startsWith("0x") || contractAdress.length !== 42) {
     console.error("Invalid contract address in environment variable");
     throw new Error("Invalid contract address in environment variable");
@@ -366,6 +365,19 @@ export const contractAbi = [
         "inputs": [
             {
                 "internalType": "address",
+                "name": "minter",
+                "type": "address"
+            }
+        ],
+        "name": "authorizeMinter",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
                 "name": "account",
                 "type": "address"
             }
@@ -548,6 +560,24 @@ export const contractAbi = [
         "inputs": [
             {
                 "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "mint",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
                 "name": "",
                 "type": "address"
             },
@@ -602,6 +632,19 @@ export const contractAbi = [
     {
         "inputs": [],
         "name": "renounceOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "minter",
+                "type": "address"
+            }
+        ],
+        "name": "revokeMinter",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"

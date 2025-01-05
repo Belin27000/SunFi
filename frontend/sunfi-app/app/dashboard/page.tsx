@@ -13,10 +13,10 @@ export default function Dashboard() {
     if (!contractAdress || typeof contractAdress !== "string") {
         throw new Error("Invalid contract address");
     }
-    const normalizedContractAddress = getAddress(contractAdress) as `0x${string}`;
+    const normalizedContractAddress = contractAdress as `0x${string}`;
 
     // Valider et normaliser l'adresse utilisateur
-    const normalizedAddress = address && typeof address === "string" ? getAddress(address) : null;
+    const normalizedAddress = address && typeof address === "string" ? address : null;
 
     // Récupérez si l'adresse connectée est un client enregistré
     const { data: isRegisteredClient, isLoading: isLoadingClient, isError: isErrorClient } = useReadContract({
@@ -62,7 +62,7 @@ export default function Dashboard() {
 
     // Vérifiez si l'utilisateur connecté est le propriétaire du contrat
     const normalizedOwnerAddress = ownerAddress && typeof ownerAddress === "string"
-        ? getAddress(ownerAddress)
+        ? ownerAddress
         : null;
     if (!normalizedOwnerAddress) {
         console.error("Owner address is invalid or missing");

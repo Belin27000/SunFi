@@ -27,25 +27,37 @@ export default function Timeline() {
         {
             id: 4,
             title: "Contrat de mint de token",
-            description: "La DApp génère des tokens en fonction de la production d'énergie enregistrée.",
+            description: "La DApp génère des tokens KWH en fonction de la production d'énergie enregistrée.",
             status: "done"
         },
         {
             id: 5,
-            title: "Staking des tokens",
-            description: "Les tokens générés peuvent être stackés pour générer des revenus supplémentaires.",
-            status: "not-started"
+            title: "Récuperation des données de supply de Aave",
+            description: "Première étape de mise en place de l'incentive en récupérant le taux de fourniture de liquidité de Aave",
+            status: "done"
         },
         {
             id: 6,
-            title: "Unstack des tokens",
-            description: "Les tokens peuvent être unstake pour être transférés sur le wallet du client.",
-            status: "not-started",
+            title: "Contrat de staking des tokens",
+            description: "Les tokens générés peuvent être stackés pour générer des revenus supplémentaires.",
+            status: "in-progress"
         },
         {
             id: 7,
-            title: "Paiement",
-            description: "Le client peut convertir ses tokens en monnaie fiduciaire ou effectuer un transfert vers un wallet externe.",
+            title: "Staking des tokens",
+            description: "Les tokens sont vérouillés et commencent à générer des intérêts selon le taux de liquidity supply de Aave",
+            status: "in-progress"
+        },
+        {
+            id: 8,
+            title: "Unstack des tokens",
+            description: "Les tokens peuvent être unstake ainsi que les rewards pour être transférés sur le wallet du client. (Token Natif du projet)",
+            status: "in-progress",
+        },
+        {
+            id: 9,
+            title: "Swap des token du projet en USDC ",
+            description: "Le client peut convertir ses tokens en monnaie fiduciaire ou effectuer un transfert vers un wallet externe en stablecoin. USDC pour le moment.",
             status: "not-started",
         },
     ];

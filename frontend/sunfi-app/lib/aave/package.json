@@ -1,0 +1,18 @@
+{
+  "name": "aave",
+  "version": "1.0.0",
+  "main": "aaveFetcher.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@aave/contract-helpers": "^1.30.5",
+    "@bgd-labs/aave-address-book": "^4.7.3",
+    "bignumber.js": "^9.1.2",
+    "ethers": "^5.7.2"
+  }
+}

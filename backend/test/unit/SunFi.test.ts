@@ -40,7 +40,6 @@ describe("SunFi contract test", function () {
     // ::::::::::::: DEPLOIEMENT DU CONTRAT ::::::::::::: //
     it("DEPLOY - Should deploy the contract and have a valid address", async function () {
         expect(contractAdress).to.be.a("string"); // Vérifiez que l'adresse est une chaîne valide
-        console.log("Deployed contract address:", contractAdress);
     });
 
 
@@ -301,15 +300,15 @@ describe("SunFi contract test", function () {
 
 })
 
-describe('Aave Data Fetcher', function () {
-    it("Should fetch data from Aave protocol", async function () {
-        const data = await fetchContractData()
-        const rate = await fetchSupplierRates()
+// describe('Aave Data Fetcher', function () {
+//     it("Should fetch data from Aave protocol", async function () {
+//         const data = await fetchContractData()
+//         const rate = await fetchSupplierRates()
 
-        console.log(rate);
-        // console.log(data.reserves);
-        await expect(data).to.have.property('reserves');
-        await expect(data).to.have.property('userReserves');
+//         console.log(rate);
+//         // console.log(data.reserves);
+//         await expect(data).to.have.property('reserves');
+//         await expect(data).to.have.property('userReserves');
 
-    })
-})
+//     })
+// })

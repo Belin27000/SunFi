@@ -12,9 +12,6 @@ const LockModule = buildModule("SunFi", (m) => {
 
   m.call(sunFi, "authorizeMinter", [stakingContract]);
 
-  // console.log("SunFi Name:", sunFi.contractName);
-  // console.log("Staking Contract Liquidity Rate:", stakingContract);
-
   return { sunFi, stakingContract };
 });
 

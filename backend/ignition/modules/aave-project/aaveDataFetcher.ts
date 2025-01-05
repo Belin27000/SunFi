@@ -7,11 +7,13 @@ dotenv.config()
 const provider = new ethers.providers.JsonRpcProvider(
     'https://eth-mainnet.public.blastapi.io',
 )
-const ownerPubAddrr = process.env.PUBLIC_ADDRESS_WALLET
+// const ownerPubAddrr = process.env.PUBLIC_ADDRESS_WALLET
 
 // const currentAccount = "0xf6ec695DdE2970Dd8D76ad5aD99B89CC89661889";
-const currentAccount = ownerPubAddrr;
-
+const currentAccount = process.env.PUBLIC_ADDRESS_WALLET;
+if (!currentAccount) {
+    throw new Error("PUBLIC_ADDRESS_WALLET is not defined in your environment variables.");
+}
 // Instances des contrats d'Aave
 const poolDataProviderContract = new UiPoolDataProvider({
     uiPoolDataProviderAddress: markets.AaveV3Ethereum.UI_POOL_DATA_PROVIDER,
@@ -34,7 +36,7 @@ export async function fetchContractData() {
 
     const userReserves = await poolDataProviderContract.getUserReservesHumanized({
         lendingPoolAddressProvider: markets.AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
-        user: currentAccount,
+        user: currentAccount!,
     });
 
     const reserveIncentives =
@@ -47,7 +49,7 @@ export async function fetchContractData() {
         await incentiveDataProviderContract.getUserReservesIncentivesDataHumanized({
             lendingPoolAddressProvider:
                 markets.AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
-            user: currentAccount,
+            user: currentAccount!,
         });
 
     return { reserves, userReserves, reserveIncentives, userIncentives };
